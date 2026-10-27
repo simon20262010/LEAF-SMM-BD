@@ -310,11 +310,12 @@ function rProv(){
   $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('এই API সরাবেন? ইমপোর্ট করা সার্ভিসগুলো থাকবে, তবে সেগুলোর অর্ডার আর প্রোভাইডারে যাবে না (আপনাকে নিজে ম্যানেজ করতে হবে)।',()=>deleteDoc(doc(db,'providers',b.dataset.pd))));
 }
 function provForm(p){
-  p=p||{name:'',url:'',key:'',markup:20};
+  p=p||{name:'',url:'',key:'',markup:20,fx:120};
   mopen(`<h2 class="t">${p._id?'এডিট':'নতুন'} প্রোভাইডার API</h2><label>নাম</label><input id="p1" value="${esc(p.name)}" placeholder="যেমন: SMMPanel1">
   <label>API URL</label><input id="p2" value="${esc(p.url)}" placeholder="https://example.com/api/v2"><label>API Key</label><input id="p3" value="${esc(p.key)}">
+  <label>কারেন্সি রেট (প্রোভাইডারের রেট ডলারে হলে ১২০ দিন, টাকায় হলে ১)</label><input id="p5" type="number" step="0.01" value="${p.fx||1}">
   <label>মার্কআপ % (প্রোভাইডারের রেটের ওপর কত % লাভ)</label><input id="p4" type="number" step="0.1" value="${p.markup||0}"><button class="btn full" id="ps">সেভ</button>`);
-  $('#ps').onclick=async()=>{const d={name:$('#p1').value.trim(),url:$('#p2').value.trim(),key:$('#p3').value.trim(),markup:+$('#p4').value||0};
+  $('#ps').onclick=async()=>{const d={name:$('#p1').value.trim(),url:$('#p2').value.trim(),key:$('#p3').value.trim(),markup:+$('#p4').value||0,fx:+$('#p5').value||1};
     if(!d.name||!/^https?:\/\//.test(d.url)||!d.key)return toast('নাম, সঠিক URL ও Key দিন','er');
     try{p._id?await updateDoc(doc(db,'providers',p._id),d):await addDoc(collection(db,'providers'),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
@@ -375,4 +376,4 @@ function rSet(){
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
 </body>
-  </html>
+</html>
