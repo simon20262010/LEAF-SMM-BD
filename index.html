@@ -518,6 +518,7 @@ $('#mXp').onclick=()=>{
     if(x<Math.max(min,rate))return toast(`কমপক্ষে ${Math.max(min,rate)} XP দিন`,'er');
     const b=$('#xpB');b.disabled=true;
     try{await runTransaction(db,async tx=>{const r=doc(db,'users',S.uid),u=(await tx.get(r)).data();if(!u||(u.xp||0)<x)throw new Error('পর্যাপ্ত XP নেই');tx.update(r,{xp:u.xp-x,balance:+((u.balance||0)+bdt).toFixed(4)})});
+      try{await addDoc(collection(db,'xpLogs'),{uid:S.uid,userName:S.me.name,xp:x,bdt,createdAt:serverTimestamp()})}catch{}
       toast(`✅ ${tk(bdt)} ব্যালেন্সে যোগ হয়েছে`,'ok');$('#gModal').classList.add('hide')}catch(e){toast(e.message.includes('permission')?'কনভার্ট করা যায়নি, আবার চেষ্টা করুন':e.message,'er')}
     b.disabled=false}};
 
