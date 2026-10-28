@@ -175,7 +175,7 @@ $('#mm').onclick=()=>$('#side').classList.toggle('open');
 function badge(id,n){const e=$(id);e.textContent=n;e.classList.toggle('hide',!n)}
 function render(){
   $('#brand').textContent=S.set.siteName||'Admin';
-  badge('#cO',S.orders.filter(o=>o.status=='pending').length);badge('#cD',S.deps.filter(o=>o.status=='pending').length);badge('#cR',S.reqs.filter(o=>o.status=='pending').length);badge('#cT',S.tix.filter(o=>o.status=='open').length);
+  badge('#cO',S.orders.filter(o=>o.status=='pending').length);badge('#cD',S.deps.filter(o=>o.status=='pending'&&!String(o.uid||'').startsWith('rb')).length);badge('#cR',S.reqs.filter(o=>o.status=='pending').length);badge('#cT',S.tix.filter(o=>o.status=='open').length);
   ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,set:rSet})[cur]();
 }
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
@@ -186,7 +186,7 @@ const confirmDo=async(msg,fn)=>{if(!confirm(msg))return;try{await fn();toast('�
 /* DASHBOARD */
 function rDash(){
   const t0=new Date();t0.setHours(0,0,0,0);const td=S.orders.filter(o=>o.createdAt?.toDate&&o.createdAt.toDate()>=t0);
-  const ok=S.deps.filter(d=>d.status=='approved');
+  const ok=S.deps.filter(d=>d.status=='approved'&&!String(d.uid||'').startsWith('rb'));
   const c=[['#1e88e5','fa-users','মোট ইউজার',S.users.length],['#7c3aed','fa-cart-shopping','মোট অর্ডার',S.orders.length],['#f59e0b','fa-hourglass-half','পেন্ডিং অর্ডার',S.orders.filter(o=>o.status=='pending').length],['#16a34a','fa-sack-dollar','মোট বিক্রি',tk(S.orders.filter(o=>o.status!='canceled').reduce((a,o)=>a+o.charge,0))],['#0ea5e9','fa-money-bill-transfer','মোট ডিপোজিট',tk(ok.reduce((a,d)=>a+d.amount,0))],['#db2777','fa-fire','আজকের অর্ডার',td.length],['#0d9488','fa-wallet','ইউজারদের মোট ব্যালেন্স',tk(S.users.reduce((a,u)=>a+(u.balance||0),0))],['#ea580c','fa-ticket','ওপেন টিকেট',S.tix.filter(t=>t.status=='open').length]];
   $('#v-dash').innerHTML=`<h2 class="t">ড্যাশবোর্ড<button class="btn s" id="lbB"><i class="fa-solid fa-trophy"></i> লিডারবোর্ড আপডেট</button></h2><div class="stats">${c.map(([bg,ic,l,v])=>`<div class="sc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('')}</div>
   <div class="card"><h2 class="t" style="font-size:16px">সর্বশেষ অর্ডার</h2><div class="tw"><table><tr><th>ID</th><th>ইউজার</th><th>সার্ভিস</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th></tr>${[...S.orders].sort((a,b)=>ts(b)-ts(a)).slice(0,8).map(o=>`<tr><td>${o.orderNo}</td><td>${esc(o.userName)}</td><td>${esc(o.serviceName)}</td><td>${o.quantity}</td><td>${tk(o.charge)}</td><td><span class="st ${o.status}">${o.status}</span></td></tr>`).join('')||'<tr><td colspan=6 class="empty">কোনো অর্ডার নেই</td></tr>'}</table></div></div>`;
@@ -225,7 +225,7 @@ async function setOrder(id,st){
     const r=doc(db,'orders',id),o=(await tx.get(r)).data();
     if(!o)throw new Error('অর্ডার পাওয়া যায়নি');
     const u=doc(db,'users',o.uid);
-    if(st=='canceled'&&!o.refunded){tx.update(u,{balance:increment(o.charge),totalSpent:increment(-o.charge)});tx.update(r,{status:st,refunded:true});}
+    if(st=='canceled'&&!o.refunded){tx.update(u,{balance:increment(o.charge),totalSpent:increment(-o.charge)});const up={status:st,refunded:true};if(o.tenantCharged&&!o.tenantRefunded&&o.tenantOwnerUid){tx.update(doc(db,'users',o.tenantOwnerUid),{balance:increment(o.tenantCost||0)});up.tenantRefunded=true}tx.update(r,up);}
     else if(st!='canceled'&&o.refunded){throw new Error('ক্যানসেল+রিফান্ড হওয়া অর্ডারের স্ট্যাটাস আর বদলানো যাবে না')}
     else tx.update(r,{status:st});
   });toast('স্ট্যাটাস আপডেট'+(st=='canceled'?' ও রিফান্ড':''),'ok')}catch(e){toast(e.message,'er');render()}
@@ -233,7 +233,7 @@ async function setOrder(id,st){
 
 /* DEPOSITS */
 function rDep(){
-  const l=S.deps.filter(d=>S.f.d=='all'||d.status==S.f.d).sort((a,b)=>ts(b)-ts(a));
+  const l=S.deps.filter(d=>!String(d.uid||'').startsWith('rb')&&(S.f.d=='all'||d.status==S.f.d)).sort((a,b)=>ts(b)-ts(a));
   $('#v-deps').innerHTML=`<h2 class="t">ডিপোজিট রিকোয়েস্ট</h2><div class="card"><div class="bar"><select id="df">${['pending','approved','rejected','all'].map(s=>`<option ${S.f.d==s?'selected':''}>${s}</option>`).join('')}</select></div>
   <div class="tw"><table><tr><th>তারিখ</th><th>ইউজার</th><th>মেথড</th><th>পরিমাণ</th><th>পাঠানো নাম্বার</th><th>TrxID</th><th>স্ট্যাটাস</th><th></th></tr>
   ${l.map(d=>`<tr><td>${fd(d.createdAt)}</td><td>${esc(d.userName)}</td><td>${esc(d.method)}</td><td><b>${tk(d.amount)}</b></td><td>${esc(d.from)}</td><td><b>${esc(d.trx)}</b></td><td><span class="st ${d.status}">${d.status}</span></td>
