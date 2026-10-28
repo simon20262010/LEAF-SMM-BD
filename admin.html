@@ -66,6 +66,7 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
     <a data-v="users"><i class="fa-solid fa-users"></i>ইউজার</a>
     <a data-v="svcs"><i class="fa-solid fa-layer-group"></i>সার্ভিস</a>
     <a data-v="prov"><i class="fa-solid fa-plug"></i>প্রোভাইডার API</a>
+    <a data-v="rb"><i class="fa-solid fa-robot"></i>রিসেলার বট</a>
     <a data-v="reqs"><i class="fa-solid fa-life-ring"></i>রিকোয়েস্ট<b id="cR" class="hide"></b></a>
     <a data-v="tix"><i class="fa-solid fa-ticket"></i>টিকেট<b id="cT" class="hide"></b></a>
     <a data-v="set"><i class="fa-solid fa-gear"></i>সেটিংস</a>
@@ -78,6 +79,7 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
     <section id="v-users" class="hide"></section>
     <section id="v-svcs" class="hide"></section>
     <section id="v-prov" class="hide"></section>
+    <section id="v-rb" class="hide"></section>
     <section id="v-reqs" class="hide"></section>
     <section id="v-tix" class="hide"></section>
     <section id="v-set" class="hide"></section>
@@ -109,7 +111,7 @@ const tk=n=>'৳'+(+n||0).toFixed(2);
 const fd=t=>t?.toDate?t.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'...';
 const ts=o=>(o.createdAt?.seconds||9e9);
 function toast(m,t=''){const e=$('#toast');e.textContent=m;e.className='toast show '+t;clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3000)}
-const S={users:[],orders:[],deps:[],svcs:[],tix:[],reqs:[],provs:[],sel:new Set(),set:{},f:{o:'all',d:'pending',t:'open',uq:'',oq:''},unsub:[]};
+const S={users:[],orders:[],deps:[],svcs:[],tix:[],reqs:[],prov:[],rb:[],rbStale:true,set:{},f:{o:'all',d:'pending',t:'open',uq:'',oq:''},unsub:[]};
 const OST=['pending','processing','completed','partial','canceled'];
 
 /* LOGIN / FIRST SETUP */
@@ -156,7 +158,7 @@ async function enter(u){
   if(!ok){toast('এই অ্যাকাউন্টের অ্যাডমিন অনুমতি নেই','er');await signOut(auth);return}
   $('#login').classList.add('hide');$('#panel').classList.remove('hide');
   const L=(c,k)=>S.unsub.push(onSnapshot(collection(db,c),s=>{S[k]=s.docs.map(d=>({_id:d.id,...d.data()}));render()},e=>console.warn(c,e.code)));
-  L('users','users');L('orders','orders');L('deposits','deps');L('services','svcs');L('tickets','tix');L('requests','reqs');L('providers','provs');
+  L('users','users');L('orders','orders');L('deposits','deps');L('services','svcs');L('tickets','tix');L('requests','reqs');L('providers','prov');
   S.unsub.push(onSnapshot(doc(db,'settings','main'),s=>{S.set=s.data()||{};render()}));
 }
 onAuthStateChanged(auth,async u=>{
@@ -168,13 +170,13 @@ onAuthStateChanged(auth,async u=>{
 
 /* NAV */
 let cur='dash';
-$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');render()});
+$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;render()});
 $('#mm').onclick=()=>$('#side').classList.toggle('open');
 function badge(id,n){const e=$(id);e.textContent=n;e.classList.toggle('hide',!n)}
 function render(){
   $('#brand').textContent=S.set.siteName||'Admin';
   badge('#cO',S.orders.filter(o=>o.status=='pending').length);badge('#cD',S.deps.filter(o=>o.status=='pending').length);badge('#cR',S.reqs.filter(o=>o.status=='pending').length);badge('#cT',S.tix.filter(o=>o.status=='open').length);
-  ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,reqs:rReq,tix:rTix,set:rSet})[cur]();
+  ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,set:rSet})[cur]();
 }
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
 $('#mo').onclick=e=>{if(e.target.id=='mo')mclose()};
@@ -211,9 +213,9 @@ function rOrd(){
   const l=S.orders.filter(o=>(S.f.o=='all'||o.status==S.f.o)&&(!q||o.orderNo.includes(q)||(o.userName||'').toLowerCase().includes(q)||o.link.toLowerCase().includes(q))).sort((a,b)=>ts(b)-ts(a));
   const v=$('#v-orders');const had=v.querySelector('#oq');
   v.innerHTML=`<h2 class="t">অর্ডার ম্যানেজমেন্ট</h2><div class="card"><div class="bar"><input id="oq" placeholder="Order ID / ইউজার / লিংক" value="${esc(S.f.oq)}"><select id="of"><option value="all">সব স্ট্যাটাস</option>${OST.map(s=>`<option ${S.f.o==s?'selected':''}>${s}</option>`).join('')}</select></div>
-  <div class="tw"><table><tr><th>ID</th><th>তারিখ</th><th>ইউজার</th><th>সার্ভিস</th><th>লিংক</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th></tr>
+  <div class="tw"><table><tr><th>ID</th><th>তারিখ</th><th>ইউজার</th><th>সার্ভিস</th><th>লিংক</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th><th>প্রোভাইডার / বট</th></tr>
   ${l.slice(0,200).map(o=>`<tr><td>${o.orderNo}</td><td>${fd(o.createdAt)}</td><td>${esc(o.userName)}</td><td>#${o.sid} ${esc(o.serviceName)}</td><td><a class="lnk" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.link)}</a></td><td>${o.quantity}</td><td>${tk(o.charge)}</td>
-  <td><select data-o="${o._id}" style="margin:0;padding:6px">${sel(OST,o.status)}</select></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কিছু নেই</td></tr>'}</table></div></div>`;
+  <td><select data-o="${o._id}" style="margin:0;padding:6px">${sel(OST,o.status)}</select></td><td style="font-size:12px">${o.provOrder?'🟢 #'+esc(o.provOrder):o.provErr?'🔴 '+esc(o.provErr):esc(o.provState||'-')}${o.via=='api'?' • API':''}${o.botId?' • 🤖':''}</td></tr>`).join('')||'<tr><td colspan=9 class="empty">কিছু নেই</td></tr>'}</table></div></div>`;
   $('#of').onchange=e=>{S.f.o=e.target.value;rOrd()};
   const qi=$('#oq');qi.oninput=e=>{S.f.oq=e.target.value;rOrd();const n=$('#oq');n.focus();n.setSelectionRange(99,99)};
   $$('[data-o]').forEach(s=>s.onchange=()=>setOrder(s.dataset.o,s.value));
@@ -273,51 +275,11 @@ function rUsr(){
 const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsapp','other'];
 function rSvc(){
   const l=[...S.svcs].sort((a,b)=>a.sid-b.sid);
-  const ids=new Set(l.map(x=>x._id));[...S.sel].forEach(x=>{if(!ids.has(x))S.sel.delete(x)});
-  const all=l.length&&S.sel.size==l.length;
-  const pn=id=>(S.provs.find(p=>p._id==id)||{}).name||'';
-  $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস (${l.length})<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button></h2>
-  <div class="bar"><label style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="sAll" style="width:auto" ${all?'checked':''}>সব সিলেক্ট</label>
-  <button class="btn r s" id="sDel" ${S.sel.size?'':'disabled'}><i class="fa-solid fa-trash"></i> সিলেক্ট করা ডিলিট (${S.sel.size})</button></div>
-  <div class="card"><div class="tw"><table><tr><th></th><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
-  ${l.map(s=>`<tr><td><input type="checkbox" class="sc" data-id="${s._id}" style="width:auto" ${S.sel.has(s._id)?'checked':''}></td><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?` <small style="color:var(--mu)">🔌${esc(pn(s.prov))}</small>`:''}</td><td>${tk(s.rate)}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=9 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
+  $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button></h2><div class="card"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
+  ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${tk(s.rate)}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
   $('#sn').onclick=()=>svcForm();
-  $('#sAll').onchange=e=>{S.sel=e.target.checked?new Set(l.map(x=>x._id)):new Set();rSvc()};
-  $$('.sc').forEach(c=>c.onchange=()=>{c.checked?S.sel.add(c.dataset.id):S.sel.delete(c.dataset.id);rSvc()});
-  $('#sDel').onclick=()=>confirmDo(S.sel.size+'টি সার্ভিস ডিলিট করবেন? এটা আর ফেরানো যাবে না।',async()=>{
-    const ids=[...S.sel];for(let i=0;i<ids.length;i+=400){const b=writeBatch(db);ids.slice(i,i+400).forEach(id=>b.delete(doc(db,'services',id)));await b.commit()}S.sel=new Set()});
   $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));
   $$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>deleteDoc(doc(db,'services',b.dataset.d))));
-}
-/* PROVIDERS */
-let BOTSRV='';
-async function botSrv(){if(BOTSRV)return BOTSRV;try{BOTSRV=((await getDoc(doc(db,'public','config'))).data()||{}).botServer||''}catch{}return BOTSRV}
-async function srvCall(path,id){
-  const u=await botSrv();if(!u)throw new Error('বট সার্ভারের ঠিকানা পাওয়া যায়নি (বট একবার চালু হতে হবে)');
-  const r=await fetch(u.replace(/\/$/,'')+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await auth.currentUser.getIdToken()},body:JSON.stringify({id})});
-  const j=await r.json().catch(()=>({error:'সার্ভার সাড়া দেয়নি (বট ঘুমিয়ে থাকতে পারে, ১ মিনিট পরে আবার চেষ্টা করুন)'}));if(j.error)throw new Error(j.error);return j;
-}
-function rProv(){
-  const l=S.provs;
-  $('#v-prov').innerHTML=`<h2 class="t">প্রোভাইডার API<button class="btn" id="pn"><i class="fa-solid fa-plus"></i> নতুন API</button></h2>
-  <div class="card" style="font-size:13px;color:var(--mu)">অন্য SMM প্যানেলের API URL ও Key দিলে তাদের সার্ভিস এখানে চলে আসবে (আপনার দেওয়া মার্কআপ % সহ)। কাস্টমার অর্ডার করলে সেটা অটো ওই প্যানেলে চলে যাবে। API সরিয়ে দিলেও ইমপোর্ট করা সার্ভিস থেকে যাবে।</div>
-  ${l.map(p=>{const n=S.svcs.filter(x=>x.prov==p._id).length;return `<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>🔌 ${esc(p.name)} <small style="color:var(--mu)">${esc(p.url)}</small></b><span>${n}টি সার্ভিস • মার্কআপ ${p.markup||0}%</span></div>
-  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn s" data-pi="${p._id}"><i class="fa-solid fa-download"></i> সার্ভিস ইমপোর্ট/আপডেট</button><button class="btn gr s" data-pb="${p._id}">ব্যালেন্স</button><button class="btn s" data-pe="${p._id}">Edit</button><button class="btn r s" data-pd="${p._id}">API সরান</button></div><div id="pm-${p._id}" style="margin-top:8px;font-size:13px"></div></div>`}).join('')||'<div class="empty">কোনো API যোগ করা নেই</div>'}`;
-  $('#pn').onclick=()=>provForm();
-  $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.provs.find(p=>p._id==b.dataset.pe)));
-  $$('[data-pb]').forEach(b=>b.onclick=async()=>{const m=$('#pm-'+b.dataset.pb);m.textContent='চেক হচ্ছে...';try{const j=await srvCall('/admin/provider/balance',b.dataset.pb);m.textContent='💰 ব্যালেন্স: '+j.balance+' '+(j.currency||'')}catch(e){m.textContent='❌ '+e.message}});
-  $$('[data-pi]').forEach(b=>b.onclick=async()=>{const m=$('#pm-'+b.dataset.pi);m.textContent='সার্ভিস আনা হচ্ছে, একটু অপেক্ষা করুন...';b.disabled=true;try{const j=await srvCall('/admin/provider/import',b.dataset.pi);m.textContent='✅ নতুন '+j.added+'টি, আপডেট '+j.updated+'টি সার্ভিস'}catch(e){m.textContent='❌ '+e.message}b.disabled=false});
-  $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('এই API সরাবেন? ইমপোর্ট করা সার্ভিসগুলো থাকবে, তবে সেগুলোর অর্ডার আর প্রোভাইডারে যাবে না (আপনাকে নিজে ম্যানেজ করতে হবে)।',()=>deleteDoc(doc(db,'providers',b.dataset.pd))));
-}
-function provForm(p){
-  p=p||{name:'',url:'',key:'',markup:20,fx:120};
-  mopen(`<h2 class="t">${p._id?'এডিট':'নতুন'} প্রোভাইডার API</h2><label>নাম</label><input id="p1" value="${esc(p.name)}" placeholder="যেমন: SMMPanel1">
-  <label>API URL</label><input id="p2" value="${esc(p.url)}" placeholder="https://example.com/api/v2"><label>API Key</label><input id="p3" value="${esc(p.key)}">
-  <label>কারেন্সি রেট (প্রোভাইডারের রেট ডলারে হলে ১২০ দিন, টাকায় হলে ১)</label><input id="p5" type="number" step="0.01" value="${p.fx||1}">
-  <label>মার্কআপ % (প্রোভাইডারের রেটের ওপর কত % লাভ)</label><input id="p4" type="number" step="0.1" value="${p.markup||0}"><button class="btn full" id="ps">সেভ</button>`);
-  $('#ps').onclick=async()=>{const d={name:$('#p1').value.trim(),url:$('#p2').value.trim(),key:$('#p3').value.trim(),markup:+$('#p4').value||0,fx:+$('#p5').value||1};
-    if(!d.name||!/^https?:\/\//.test(d.url)||!d.key)return toast('নাম, সঠিক URL ও Key দিন','er');
-    try{p._id?await updateDoc(doc(db,'providers',p._id),d):await addDoc(collection(db,'providers'),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 function svcForm(s){
   const n=!s;s=s||{sid:(Math.max(1000,...S.svcs.map(x=>x.sid))+1),platform:'facebook',category:'',name:'',rate:0,min:100,max:10000,avgTime:'',desc:'',enabled:true};
@@ -330,6 +292,65 @@ function svcForm(s){
   $('#fs').onclick=async()=>{const d={sid:+$('#f1').value,platform:$('#f2').value,category:$('#f3').value.trim(),name:$('#f4').value.trim(),rate:+$('#f5').value,min:+$('#f6').value,max:+$('#f7').value,avgTime:$('#f8').value.trim(),desc:$('#f9').value.trim(),enabled:$('#f10').checked};
     if(!d.category||!d.name||!d.rate||!d.min||!d.max||d.min>d.max)return toast('সব তথ্য সঠিকভাবে দিন','er');
     try{n?await addDoc(collection(db,'services'),d):await updateDoc(doc(db,'services',s._id),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+}
+
+/* বট সার্ভারের সাথে যোগাযোগ (প্রোভাইডার ও রিসেলার বট) */
+async function srv(path,body){
+  let base='';try{base=((await getDoc(doc(db,'public','config'))).data()?.botServer||'').replace(/\/$/,'')}catch{}
+  if(!base)throw new Error('বট সার্ভারের ঠিকানা পাওয়া যায়নি (Render এ API_BASE_URL দিন)');
+  const tok=await auth.currentUser.getIdToken();
+  const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({error:'সার্ভারের উত্তর বোঝা যায়নি'}));
+  if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;
+  return j;
+}
+
+/* PROVIDERS */
+function rProv(){
+  const l=[...S.prov].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  $('#v-prov').innerHTML=`<h2 class="t">প্রোভাইডার API<button class="btn" id="pn"><i class="fa-solid fa-plus"></i> নতুন প্রোভাইডার</button></h2><div class="card"><p style="color:var(--mu);font-size:13px;margin-bottom:12px">অন্য প্যানেলের API যুক্ত করুন। "সার্ভিস ইমপোর্ট" চাপলে সার্ভিস আসবে (রেটের সাথে মার্কআপ যোগ হবে) এবং ওই সার্ভিসের অর্ডার নিজে থেকে প্রোভাইডারে চলে যাবে। প্রোভাইডারের কী/রেট ইউজাররা দেখতে পায় না।</p>
+  <div class="tw"><table><tr><th>নাম</th><th>API URL</th><th>কী</th><th>মার্কআপ %</th><th>রেট গুণক</th><th>সার্ভিস</th><th></th></tr>
+  ${l.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td><span class="lnk">${esc(p.url)}</span></td><td>${esc((p.key||'').slice(0,4))}••••</td><td>${p.markup||0}%</td><td>${p.fx||1}</td><td>${S.svcs.filter(s=>s.prov==p._id).length}</td>
+  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
+  $('#pn').onclick=()=>provForm();
+  $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
+  $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>deleteDoc(doc(db,'providers',b.dataset.pd))));
+  $$('[data-pb]').forEach(b=>b.onclick=async()=>{toast('চেক করা হচ্ছে...');try{const r=await srv('/admin/provider/balance',{id:b.dataset.pb});r.error?toast(r.error,'er'):toast('প্রোভাইডার ব্যালেন্স: '+r.balance+' '+(r.currency||''),'ok')}catch(e){toast(e.message,'er')}});
+  $$('[data-pi]').forEach(b=>b.onclick=async()=>{if(!confirm('সার্ভিস ইমপোর্ট করবেন? আগের ইমপোর্ট করা সার্ভিসের রেট নতুন করে বসবে।'))return;toast('ইমপোর্ট হচ্ছে, একটু অপেক্ষা করুন...');try{const r=await srv('/admin/provider/import',{id:b.dataset.pi});r.error?toast(r.error,'er'):toast('নতুন '+r.added+' টি, আপডেট '+r.updated+' টি','ok')}catch(e){toast(e.message,'er')}});
+}
+function provForm(p){
+  const n=!p;p=p||{name:'',url:'',key:'',markup:0,fx:1};
+  mopen(`<h2 class="t">${n?'নতুন':'এডিট'} প্রোভাইডার</h2><label>নাম</label><input id="p1" value="${esc(p.name)}" placeholder="যেমন: Provider A">
+  <label>API URL</label><input id="p2" value="${esc(p.url)}" placeholder="https://example.com/api/v2"><label>API Key</label><input id="p3" value="${esc(p.key)}">
+  <div class="fg"><div><label>মার্কআপ (%)</label><input id="p4" type="number" step="0.1" value="${p.markup||0}"></div><div><label>রেট গুণক (ডলার→টাকা)</label><input id="p5" type="number" step="0.0001" value="${p.fx||1}"></div></div>
+  <button class="btn full" id="ps">সেভ</button>`);
+  $('#ps').onclick=async()=>{const d={name:$('#p1').value.trim(),url:$('#p2').value.trim(),key:$('#p3').value.trim(),markup:+$('#p4').value||0,fx:+$('#p5').value||1};
+    if(!d.name||!/^https?:\/\//i.test(d.url)||!d.key)return toast('নাম, সঠিক URL ও কী দিন','er');
+    try{n?await addDoc(collection(db,'providers'),d):await updateDoc(doc(db,'providers',p._id),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+}
+
+/* RESELLER BOTS */
+async function rRb(){
+  if(S.rbStale){S.rbStale=false;$('#v-rb').innerHTML='<div class="empty">লোড হচ্ছে... (সার্ভার ঘুমিয়ে থাকলে ১ মিনিট লাগতে পারে)</div>';
+    try{const r=await srv('/admin/rbots');if(r.error)throw new Error(r.error);S.rb=r.bots||[]}catch(e){toast(e.message,'er');S.rb=[]}}
+  drawRb();
+}
+function drawRb(){
+  const l=S.rb;
+  $('#v-rb').innerHTML=`<h2 class="t">রিসেলার বট (${l.length})<span><button class="btn s gr" id="rbR"><i class="fa-solid fa-rotate"></i> রিফ্রেশ</button> <button class="btn s" id="rbB"><i class="fa-solid fa-bullhorn"></i> সব রিসেলার বটে ব্রডকাস্ট</button></span></h2>
+  <div class="card"><div class="bar"><input id="rbC" type="number" step="0.01" value="${S.set.resellerBotCharge||0}" placeholder="রিসেলার বট তৈরির চার্জ (৳)"><button class="btn" id="rbCs">চার্জ সেভ</button></div>
+  <div class="tw"><table><tr><th>বট</th><th>মালিক TG</th><th>অ্যাডমিন TG</th><th>অর্ডার চ্যানেল</th><th>ফোর্স</th><th>ইউজার</th><th>অর্ডার</th><th>বিক্রি</th><th>স্ট্যাটাস</th><th></th></tr>
+  ${l.map(b=>`<tr><td><b>@${esc(b.username)}</b></td><td>${esc(b.ownerTid)}</td><td>${esc(b.adminId)}</td><td>${esc(b.orderChannel||'—')}</td><td>${(b.forceChannels||[]).length}</td><td>${b.users||0}</td><td>${b.orders||0}</td><td>${tk(b.sales)}</td><td>${b.active?'<span class="st approved">চালু</span>':'<span class="st rejected">বন্ধ</span>'}</td>
+  <td style="white-space:nowrap"><button class="btn s ${b.active?'r':'g'}" data-rt="${b.id}">${b.active?'বন্ধ':'চালু'}</button> <button class="btn s" data-rc="${b.id}">চ্যানেল</button> <button class="btn s" data-rf="${b.id}">ফোর্স</button> <button class="btn s gr" data-rbc="${b.id}">ব্রডকাস্ট</button></td></tr>`).join('')||'<tr><td colspan=10 class="empty">এখনো কোনো রিসেলার বট নেই</td></tr>'}</table></div></div>`;
+  const upd=async(id,body)=>{try{const r=await srv('/admin/rbots/update',{id,...body});if(r.error)throw new Error(r.error);toast('সেভ হয়েছে','ok');mclose();S.rbStale=true;rRb()}catch(e){toast(e.message,'er')}};
+  const bc=async(id,text)=>{if(!text.trim())return toast('মেসেজ লিখুন','er');try{const r=await srv('/admin/rbots/broadcast',{id,text});if(r.error)throw new Error(r.error);toast('ব্রডকাস্ট শুরু হয়েছে (ব্যাকগ্রাউন্ডে যাচ্ছে)','ok');mclose()}catch(e){toast(e.message,'er')}};
+  $('#rbR').onclick=()=>{S.rbStale=true;rRb()};
+  $('#rbCs').onclick=async()=>{try{await setDoc(doc(db,'settings','main'),{resellerBotCharge:+$('#rbC').value||0},{merge:true});toast('চার্জ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+  $('#rbB').onclick=()=>{mopen(`<h2 class="t">📢 সব রিসেলার বটে ব্রডকাস্ট</h2><label>মেসেজ</label><textarea id="bm" rows="4"></textarea><button class="btn full" id="bs2">পাঠান</button>`);$('#bs2').onclick=()=>bc('all',$('#bm').value)};
+  $$('[data-rt]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rt);confirmDo((b.active?'বন্ধ':'চালু')+' করবেন?',()=>upd(b.id,{active:!b.active}))});
+  $$('[data-rc]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rc);mopen(`<h2 class="t">@${esc(b.username)} — অর্ডার চ্যানেল</h2><label>@নাম বা -100… আইডি</label><input id="oc" value="${esc(b.orderChannel||'')}"><button class="btn full" id="ocs">সেভ</button>`);$('#ocs').onclick=()=>upd(b.id,{orderChannel:$('#oc').value.trim()})});
+  $$('[data-rf]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rf);mopen(`<h2 class="t">@${esc(b.username)} — ফোর্স জয়েন চ্যানেল</h2><label>প্রতি লাইনে একটি (@নাম অথবা -100…|https://t.me/+লিংক)</label><textarea id="fc" rows="4">${esc((b.forceChannels||[]).join('\n'))}</textarea><button class="btn full" id="fcs">সেভ</button>`);$('#fcs').onclick=()=>upd(b.id,{forceChannels:$('#fc').value.split('\n').map(y=>y.trim()).filter(Boolean)})});
+  $$('[data-rbc]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rbc);mopen(`<h2 class="t">📢 @${esc(b.username)} এর ইউজারদের মেসেজ</h2><label>মেসেজ</label><textarea id="bm" rows="4"></textarea><button class="btn full" id="bs2">পাঠান</button>`);$('#bs2').onclick=()=>bc(b.id,$('#bm').value)});
 }
 
 /* TICKETS */
@@ -351,17 +372,17 @@ function rSet(){
   <div><label>প্রতি ৳১ খরচে XP</label><input id="x2" type="number" step="0.1" value="${s.xpPerTaka||0}"></div>
   <div><label>কত XP = ৳১</label><input id="x3" type="number" value="${s.xpPerBdt||0}"></div>
   <div><label>ন্যূনতম XP কনভার্ট</label><input id="x4" type="number" value="${s.minXpConvert||0}"></div>
-  <div><label>টিউটোরিয়াল ভিডিও লিংক</label><input id="x5" value="${esc(s.tutorialLink||'')}"></div>
-  <div><label>টেলিগ্রাম মিনি অ্যাপ লিংক (যেমন https://t.me/YourBot/app)</label><input id="x6" value="${esc(s.botLink||'')}"></div></div>
-  <h3 style="margin:18px 0 4px">🤖 বট সেটিংস</h3>
-  <label>ফোর্স জয়েন চ্যানেল (প্রতি লাইনে একটি: @username অথবা প্রাইভেট হলে -100123...|https://t.me/+invite) — বটকে ওই চ্যানেলে অ্যাডমিন বানাতে হবে</label><textarea id="b1" rows="3">${esc((s.forceChannels||[]).join('\n'))}</textarea>
-  <div class="fg"><div><label>অর্ডার চ্যানেল (@username বা -100...)</label><input id="b2" value="${esc(s.orderChannel||'')}"></div>
-  <div><label>অর্ডার পোস্টের নিচের বাটন লিংক (খালি = বটের লিংক)</label><input id="b3" value="${esc(s.orderBtnLink||'')}"></div></div>
-  <label>বট অ্যাডমিন টেলিগ্রাম আইডি (প্রতি লাইনে একটি, অতিরিক্ত)</label><textarea id="b4" rows="2">${esc((s.adminIds||[]).join('\n'))}</textarea>
+  <div><label>টিউটোরিয়াল ভিডিও লিংক</label><input id="x5" value="${esc(s.tutorialLink||'')}"></div></div>
+  <h2 class="t" style="font-size:16px;margin-top:22px">🤖 টেলিগ্রাম বট সেটিংস</h2><div class="fg">
+  <div><label>অ্যাডমিন টেলিগ্রাম আইডি (কমা দিয়ে)</label><input id="b1" value="${esc((s.adminIds||[]).join(', '))}" placeholder="123456789, 987654321"></div>
+  <div><label>অর্ডার চ্যানেল (@নাম বা -100…)</label><input id="b3" value="${esc(s.orderChannel||'')}"></div>
+  <div><label>অর্ডার পোস্টের বাটন লিংক</label><input id="b4" value="${esc(s.orderBtnLink||'')}" placeholder="https://t.me/yourbot"></div>
+  <div><label>রিসেলার বট চার্জ (৳)</label><input id="b5" type="number" step="0.01" value="${s.resellerBotCharge||0}"></div></div>
+  <label>ফোর্স জয়েন চ্যানেল (প্রতি লাইনে একটি: @নাম অথবা -100…|https://t.me/+লিংক)</label><textarea id="b2" rows="3">${esc((s.forceChannels||[]).join('\n'))}</textarea>
+  <p style="color:var(--mu);font-size:12px;margin-top:6px">ছবি (অর্ডার/রিসেলার/XP) বটের অ্যাডমিন মেনু থেকে সেট করুন।</p>
   <label>নোটিশ (হোমে দেখাবে, খালি রাখলে লুকাবে)</label><textarea id="s5" rows="2">${esc(s.notice||'')}</textarea>
   <label>ব্যানার ইমেজ লিংক (প্রতি লাইনে একটি, খালি রাখলে ডিফল্ট)</label><textarea id="s6" rows="3">${esc((s.banners||[]).join('\n'))}</textarea>
   <label>ভিআইপি লেভেল (প্রতি লাইনে: নাম,ন্যূনতম খরচ,ডিসকাউন্ট%)</label><textarea id="s7" rows="5">${(s.levels||[{name:'Starter',min:0,disc:0},{name:'Bronze',min:500,disc:2},{name:'Silver',min:2000,disc:4},{name:'Gold',min:5000,disc:6},{name:'Diamond',min:15000,disc:10}]).map(l=>[l.name,l.min,l.disc].join(',')).join('\n')}</textarea>
-  <label>সাপোর্ট বটের উত্তর (প্রতি লাইনে: কিওয়ার্ড১, কিওয়ার্ড২ => উত্তর)</label><textarea id="s8" rows="5" placeholder="যেমন: সময়, কতক্ষণ => অর্ডার সাধারণত ১ ঘণ্টার মধ্যে সম্পন্ন হয়।">${(s.faq||[]).map(f=>(f.k||[]).join(', ')+' => '+f.a).join('\n')}</textarea>
   <label>পেমেন্ট মেথড</label><div id="pmL">${m.map((x,i)=>pmRow(x)).join('')}</div>
   <button class="btn gr s" id="pmA" style="margin-top:10px"><i class="fa-solid fa-plus"></i> মেথড যোগ</button><br><button class="btn full" id="ss">সেভ করুন</button></div>
   <div class="card"><h2 class="t" style="font-size:17px">🔑 অ্যাডমিন পাসওয়ার্ড পরিবর্তন</h2><div class="fg"><div><label>বর্তমান পাসওয়ার্ড</label><input id="cp0" type="password"></div><div><label>নতুন পাসওয়ার্ড</label><input id="cp1" type="password"></div><div><label>নতুন পাসওয়ার্ড আবার</label><input id="cp2" type="password"></div></div><button class="btn" id="cpB" style="margin-top:14px">পাসওয়ার্ড বদলান</button></div>`;
@@ -371,7 +392,7 @@ function rSet(){
   $('#pmL').onclick=e=>{const b=e.target.closest('[data-rm]');if(b)b.parentElement.remove()};
   $('#ss').onclick=async()=>{
     const methods=$$('#pmL .pmr').map(r=>({name:r.children[0].value.trim(),number:r.children[1].value.trim(),note:r.children[2].value.trim()})).filter(x=>x.name&&x.number);
-    try{await setDoc(doc(db,'settings','main'),{forceChannels:$('#b1').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b2').value.trim(),orderBtnLink:$('#b3').value.trim(),adminIds:$('#b4').value.split(/[\s,]+/).map(x=>x.trim()).filter(x=>/^\d+$/.test(x)),siteName:$('#s1').value.trim(),supportLink:$('#s2').value.trim(),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),botLink:$('#x6').value.trim(),faq:$('#s8').value.split('\n').map(l=>l.split('=>')).filter(p=>p.length>=2&&p[0].trim()&&p[1].trim()).map(p=>({k:p[0].split(',').map(x=>x.trim()).filter(Boolean),a:p.slice(1).join('=>').trim()})),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},{merge:true});toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+    try{await setDoc(doc(db,'settings','main'),{adminIds:$('#b1').value.split(/[\s,]+/).filter(x=>/^\d+$/.test(x)),forceChannels:$('#b2').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b3').value.trim(),orderBtnLink:$('#b4').value.trim(),resellerBotCharge:+$('#b5').value||0,siteName:$('#s1').value.trim(),supportLink:$('#s2').value.trim(),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},{merge:true});toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
