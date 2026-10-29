@@ -341,7 +341,7 @@ async function tgLogin(){
 
 /* ---------- SESSION (একবার লগইন করলেই থাকবে) ---------- */
 onAuthStateChanged(auth,u=>{
-  S.unsub.forEach(f=>f());S.unsub=[];
+  S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._catT);
   $('#load').classList.add('hide');
   if(u&&TG&&TG.initData&&tgUser&&!S._fix){const ex=BOTID?`rb${BOTID}_${tgUser.id}`:`tg${tgUser.id}`;
     if(u.uid!==ex&&(BOTID||/^(tg|rb)/.test(u.uid))){S._fix=true;S._tgTry=false;$('#load').classList.remove('hide');signOut(auth);return}}
@@ -357,8 +357,7 @@ onAuthStateChanged(auth,u=>{
       return;
     }
     S._mk=false;S.me=s.data();renderAll()});
-  L(doc(db,'settings','main'),s=>{S.set=s.data()||{};mergeBot();renderAll()});
-  L(query(collection(db,'services'),where('enabled','==',true)),s=>{S.raw=s.docs.map(d=>({_id:d.id,...d.data()}));applyPrices()});
+  startCatalog(L);
   L(query(collection(db,'orders'),where('uid','==',u.uid)),s=>{S.orders=s.docs.map(d=>({_id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rOrders();rSet()});
   L(query(collection(db,'deposits'),where('uid','==',u.uid)),s=>{S.deps=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rDeps()});
   L(query(collection(db,'tickets'),where('uid','==',u.uid)),s=>{S.tix=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rTix()});
@@ -568,6 +567,30 @@ $('#mApi').onclick=async()=>{
   <b>Balance:</b> ?key=KEY&amp;action=balance<br><b>Services:</b> ?key=KEY&amp;action=services<br><b>Add:</b> ?key=KEY&amp;action=add&amp;service=ID&amp;link=URL&amp;quantity=N<br><b>Status:</b> ?key=KEY&amp;action=status&amp;order=ORDER_ID</div>
   <div style="font-size:12px;color:#64748b;margin-top:8px">নতুন কী বা বন্ধ করতে বটের Get Reseller API মেনু ব্যবহার করুন।</div>`)};
 $('#mTut').onclick=()=>S.set.tutorialLink?openL(S.set.tutorialLink):toast('টিউটোরিয়াল লিংক সেট করা নেই','er');
+
+/* ---------- সার্ভিস/সেটিংস: বট সার্ভার থেকে (ফোনে জমা রেখে), ব্যর্থ হলে সরাসরি Firebase ---------- */
+const CK='leafCatalog';
+function applyCatalog(c){S.set=c.settings||{};S.raw=c.services||[];mergeBot();applyPrices();renderAll()}
+async function fetchCatalog(){
+  const bs=((await botServer())||'').replace(/\/$/,'');if(!bs||!auth.currentUser)throw new Error('no');
+  const tok=await auth.currentUser.getIdToken(),ac=new AbortController(),t=setTimeout(()=>ac.abort(),9000);
+  try{const r=await fetch(bs+'/public/catalog',{headers:{Authorization:'Bearer '+tok},signal:ac.signal});if(!r.ok)throw new Error('http');return await r.json()}finally{clearTimeout(t)}
+}
+function fbCatalog(L){
+  if(S._fbc)return;S._fbc=true;
+  L(doc(db,'settings','main'),s=>{S.set=s.data()||{};mergeBot();renderAll()});
+  L(query(collection(db,'services'),where('enabled','==',true)),s=>{S.raw=s.docs.map(d=>({_id:d.id,...d.data()}));applyPrices()});
+}
+function startCatalog(L){
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(CK)||'null')}catch{}
+  if(cached&&cached.c)applyCatalog(cached.c);
+  const run=async()=>{
+    try{const c=await fetchCatalog();try{localStorage.setItem(CK,JSON.stringify({t:Date.now(),c}))}catch{}S._catOk=true;applyCatalog(c)}
+    catch(e){if(!S._catOk&&!(cached&&cached.c))fbCatalog(L)}
+  };
+  if(!cached||Date.now()-(cached.t||0)>120000)run();
+  S._catT=setInterval(run,180000);
+}
 
 /* ---------- রিসেলার বট: সার্ভার কল, দাম, ম্যানেজ প্যানেল ---------- */
 async function api(path,body){
