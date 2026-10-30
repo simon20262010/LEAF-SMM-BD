@@ -173,6 +173,18 @@ section:not(.hide){animation:fadeUp .38s ease both}
 .ok-burst svg{width:60px;height:60px}.ok-burst path{stroke:#fff;stroke-width:6;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .5s .25s ease forwards}
 .ok-burst .p{position:absolute;width:10px;height:10px;border-radius:3px;animation:burst 1s ease-out forwards}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+#gate{position:fixed;inset:0;z-index:150;background:linear-gradient(160deg,#1e88e5,#1565c0 55%,#0b3d91);display:flex;align-items:center;justify-content:center;padding:22px;overflow:auto;animation:fadeUp .4s both}
+#gate .gb{width:100%;max-width:420px;text-align:center;color:#fff}
+#gate .gi{font-size:52px;width:108px;height:108px;margin:0 auto 14px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;animation:floaty 2.6s ease-in-out infinite,ring 2s ease-out infinite}
+#gate h2{font:700 22px 'Hind Siliguri';margin-bottom:6px}#gate p{opacity:.92;font-size:14px;line-height:1.6;margin-bottom:12px}
+.gch{background:#fff;color:var(--tx);border-radius:18px;padding:12px 14px;margin:10px 0;display:flex;align-items:center;gap:12px;text-align:left;animation:pop .5s both;box-shadow:0 8px 22px rgba(0,0,0,.18)}
+.gch .n{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#42a5f5,#1565c0);color:#fff;display:flex;align-items:center;justify-content:center;font:700 14px Poppins;flex:none}
+.gch b{flex:1;word-break:break-all;font-size:15px}.gch button{border:0;border-radius:12px;background:#16a34a;color:#fff;padding:9px 14px;font:700 13px 'Hind Siliguri';cursor:pointer;flex:none}
+.gch button:active{transform:scale(.94)}
+#gate .gbtn{width:100%;border:0;border-radius:16px;padding:15px;margin-top:10px;background:#fff;color:#1565c0;font:700 16px 'Hind Siliguri';cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.2);transition:transform .15s}
+#gate .gbtn:active{transform:scale(.97)}#gate .gbtn:disabled{opacity:.7}
+#gate .gs{margin-top:16px;border:0;display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.16);color:#fff;border-radius:30px;padding:9px 16px;font:600 13px 'Hind Siliguri';cursor:pointer}
 </style>
 </head>
 <body>
@@ -387,7 +399,7 @@ async function tgLogin(){
   try{const bs=await botServer();if(!bs)return false;
     const r=await fetch(bs.replace(/\/$/,'')+'/auth/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:TG.initData})});
     const j=await r.json();
-    if(j.error==='join'){$('#load').classList.add('hide');document.body.innerHTML='<div class="empty" style="padding-top:25vh"><i class="fa-solid fa-bullhorn"></i>ব্যবহার করতে আগে আমাদের চ্যানেলে জয়েন করুন:<br><br>'+(j.channels||[]).map(c=>'<a href="https://t.me/'+esc(String(c).replace('@',''))+'" style="color:#16a34a;font-weight:700">'+esc(c)+'</a>').join('<br>')+'<br><br><button class="btn" onclick="location.reload()">✅ জয়েন করেছি</button></div>';return true}
+    if(j.error==='join'){showGate({channels:j.channels||[],support:j.support||''});return true}
     if(j.error==='banned'){document.body.innerHTML='<div class="empty" style="padding-top:30vh">আপনার অ্যাকাউন্টটি ব্লক করা হয়েছে।</div>';return true}
     if(!j.token)return false;
     await signInWithCustomToken(auth,j.token);return true}catch(e){console.warn(e);return false}
@@ -476,7 +488,7 @@ $('#order').onclick=async()=>{
 function rOrders(){
   const cnt=k=>k=='all'?S.orders.length:S.orders.filter(o=>o.status==k).length;
   $('#chips').innerHTML=['all',...ST].map(k=>`<div class="chip ${S.of==k?'on':''}" data-k="${k}"><b>${cnt(k)}</b>${k=='all'?'সব':k.toUpperCase()}</div>`).join('');
-  $$('.chip').forEach(c=>c.onclick=()=>{S.of=c.dataset.k;rOrders()});
+  numAnim($$('#chips .chip b'),'ch');$$('.chip').forEach(c=>c.onclick=()=>{S.of=c.dataset.k;rOrders()});
   const q=$('#oq').value.trim().toLowerCase();
   const l=S.orders.filter(o=>(S.of=='all'||o.status==S.of)&&(!q||o.orderNo.includes(q)||o.serviceName.toLowerCase().includes(q)));
   $('#olist').innerHTML=l.map(o=>`<div class="oc"><div class="h"><div><small>#${o.sid}</small><h4>${esc(o.serviceName)}</h4></div><span class="st ${o.status}">${o.status}</span></div>
@@ -509,7 +521,7 @@ function rDeps(){$('#dHist').innerHTML=S.deps.map(d=>`<div class="hi"><div><b>${
 /* ---------- REFERRAL ---------- */
 function rRef(){
   if(!S.me)return;const code=tgUser&&!S.bot?.tenant?tgUser.id:(tgUser?tgUser.id:S.uid);
-  $('#rCode').textContent=code;$('#rPct').textContent=S.set.refPercent||0;$('#rEarn').textContent=tk(S.me.refEarned);$('#rCnt').textContent=S.team.length+' জন রেফার';
+  $('#rCode').textContent=code;$('#rPct').textContent=S.set.refPercent||0;$('#rEarn').textContent=tk(S.me.refEarned);numAnim([$('#rEarn')],'re');$('#rCnt').textContent=S.team.length+' জন রেফার';
   $('#rList').innerHTML=S.team.map(t=>`<div class="hi"><b>${esc(t.name)}</b><small style="color:var(--mu)">${fd(t.createdAt)}</small></div>`).join('')||'<div class="empty"><i class="fa-solid fa-user-plus"></i>এখনো কেউ রেফার হয়নি</div>';
 }
 $('#rCopy').onclick=async()=>{const bu=S.bot&&S.bot.bot,bl=S.set.botLink,l=bu?'https://t.me/'+bu+'?start='+S.uid:(bl?bl+(bl.includes('?')?'&':'?')+'startapp='+S.uid:location.origin+location.pathname+'?ref='+S.uid);try{await navigator.clipboard.writeText(l);toast('লিংক কপি হয়েছে','ok')}catch{if(TG)TG.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(l));else prompt('কপি করুন:',l)}};
@@ -525,7 +537,7 @@ function rSet(){
   const pct=nx?Math.min(100,(sp-LV[li][1])/(nx[1]-LV[li][1])*100):100;$('#sBar').style.width=pct+'%';$('#sPct').textContent='অগ্রগতি: '+pct.toFixed(1)+'%';$('#sNext').textContent=nx?`পরবর্তী: ${nx[0]} যেতে ${tk(nx[1]-sp)} প্রয়োজন`:'সর্বোচ্চ লেভেল 🎉';
   const t0=new Date();t0.setHours(0,0,0,0);const td=S.orders.filter(o=>o.createdAt?.toDate&&o.createdAt.toDate()>=t0);
   const c=[['#10b981','fa-wallet','মেইন ব্যালেন্স',tk(m.balance)],['#0ea5e9','fa-circle-plus','মোট ডিপোজিট',tk(m.totalDeposit)],['#dc2626','fa-receipt','মোট খরচ',tk(sp)],['#7c3aed','fa-cart-shopping','মোট অর্ডার',(m.orderCount||0)+' টি'],['#4f46e5','fa-bolt','আজকের অর্ডার',td.length+' টি'],['#db2777','fa-fire','আজকের খরচ',tk(td.reduce((a,o)=>a+o.charge,0))],['#0d9488','fa-gift','মোট রেফার ব্যালেন্স',tk(m.refEarned)],['#ea580c','fa-coins','মোট XP',m.xp||0]];
-  $('#stats').innerHTML=c.map(([bg,ic,l,v])=>`<div class="gc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('');
+  $('#stats').innerHTML=c.map(([bg,ic,l,v])=>`<div class="gc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('');numAnim($$('#stats .gc b'),'st');
 }
 $('#mOut').onclick=()=>{const go=()=>signOut(auth);TG&&TG.showConfirm?TG.showConfirm('লগআউট করবেন?',ok=>{if(ok)go()}):(confirm('লগআউট করবেন?')&&go())};
 $('#mPass').onclick=async()=>{try{await sendPasswordResetEmail(auth,S.me.email);toast('রিসেট লিংক ইমেইলে পাঠানো হয়েছে','ok')}catch(e){toast(errMsg(e),'er')}};
@@ -637,6 +649,22 @@ function startCatalog(){
 /* ---------- রিসেলার বট: সার্ভার কল, দাম, ম্যানেজ প্যানেল ---------- */
 
 
+
+/* ---------- ফোর্স জয়েন গেট (অ্যাপের ভেতরেই) ---------- */
+function hideGate(){S._gate=false;const g=$('#gate');if(g)g.remove()}
+function showGate(j){
+  S._gate=true;$('#load').classList.add('hide');
+  let g=$('#gate');if(!g){g=document.createElement('div');g.id='gate';document.body.appendChild(g)}
+  const ch=j.channels||[],sp=j.support||'',un=sp.replace(/^https?:\/\/(t\.me|telegram\.me)\//,'@').replace(/\?.*$/,'');
+  g.innerHTML=`<div class="gb"><div class="gi">📢</div><h2>চালিয়ে যেতে আগে জয়েন করুন</h2><p>নিচের চ্যানেল/গ্রুপে জয়েন করলেই অ্যাপ খুলে যাবে। পরে লিভ নিলে আবার আটকে যাবে।</p>
+  ${ch.map((c,i)=>`<div class="gch" style="animation-delay:${i*.08}s"><span class="n">${i+1}</span><b>${esc(c.label)}</b>${c.link?`<button data-gl="${esc(c.link)}">জয়েন করুন</button>`:''}</div>`).join('')}
+  <button class="gbtn" id="gOk">✅ আমি জয়েন করেছি</button>
+  ${sp?`<button class="gs" data-gl="${esc(sp)}"><i class="fa-regular fa-comment-dots"></i> সাহায্য দরকার? ${esc(un)}</button>`:''}</div>`;
+  $$('#gate [data-gl]').forEach(b=>b.onclick=()=>openL(b.dataset.gl));
+  $('#gOk').onclick=async()=>{const b=$('#gOk');b.disabled=true;b.textContent='যাচাই হচ্ছে...';
+    if(S.uid){await syncNow(true);const g2=$('#gate');if(g2){const x=$('#gOk');if(x){x.disabled=false;x.textContent='✅ আমি জয়েন করেছি'}toast('এখনো সব চ্যানেলে জয়েন করেননি','er')}}else location.reload()};
+}
+
 /* ---------- অ্যানিমেশন হেল্পার ---------- */
 function celebrate(){
   const d=document.createElement('div');d.className='ok-burst';
@@ -645,6 +673,13 @@ function celebrate(){
   for(let i=0;i<22;i++){const a=Math.random()*6.28,r=90+Math.random()*110;h+=`<i class="p" style="background:${cols[i%6]};--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px;animation-delay:${.15+Math.random()*.15}s"></i>`}
   d.innerHTML=h;document.body.appendChild(d);setTimeout(()=>d.remove(),1500);
   try{TG&&TG.HapticFeedback&&TG.HapticFeedback.notificationOccurred('success')}catch{}
+}
+function numAnim(els,key){
+  S._nv=S._nv||{};const red=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  [...els].forEach((el,i)=>{if(!el)return;const m=el.textContent.match(/^(\D*?)(\d[\d,]*\.?\d*)(.*)$/);if(!m)return;
+    const dec=(m[2].split('.')[1]||'').length,to=parseFloat(m[2].replace(/,/g,'')),k=key+i,from=S._nv[k]??0;S._nv[k]=to;
+    if(from===to||red)return;const t0=performance.now(),D=850;
+    const f=t=>{const p=Math.min(1,(t-t0)/D),e=1-Math.pow(1-p,3);el.textContent=m[1]+(from+(to-from)*e).toFixed(dec)+m[3];if(p<1)requestAnimationFrame(f)};requestAnimationFrame(f)});
 }
 function countUp(el,to,dec=2){
   const from=+el._v||0;el._v=to;if(from===to){el.textContent=to.toFixed(dec);return}
@@ -663,6 +698,8 @@ async function syncNow(fresh){
   if(!auth.currentUser||S._syncing)return;S._syncing=true;
   try{const j=await api('/u/sync',{h:fresh?'':(S._h||''),fresh:!!fresh});
     if(j.need_init){S._syncing=false;return initProfile()}
+    if(j.join){showGate(j.join);return}
+    if(S._gate)hideGate();
     if(j.error||j.same)return;
     S._h=j.h;const x=fx(j);S.me=x.me;S.orders=x.orders;S.deps=x.deps;S.tix=x.tix;S.reqs=x.reqs;S.team=x.team;
     renderAll();rOrders();rSet();rDeps();rTix();rRef();if(S._rq)S._rq();
@@ -676,7 +713,7 @@ async function api(path,body){
   const r=await fetch(bs+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body||{})});
   const j=await r.json().catch(()=>({error:'সার্ভারের উত্তর বোঝা যায়নি'}));if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;return j;
 }
-const botRate=s=>{const B=S.bot||{},p=(B.prices||{})[s.sid];return p!=null&&!isNaN(+p)?Math.max(+s.rate,+p):+(s.rate*(1+(+B.margin||0)/100)).toFixed(4)};
+const botRate=s=>{const B=S.bot||{},p=(B.prices||{})[s.sid];return p!=null&&!isNaN(+p)?Math.max(+s.rate,+p):+(s.rate*(1+(+B.margin||0)/100)+(+B.flat||0)).toFixed(4)};
 function applyPrices(){const t=S.bot&&S.bot.tenant;S.svcs=(S.raw||[]).map(s=>t?{...s,rate:botRate(s)}:s).sort((a,b)=>a.sid-b.sid);fillCats()}
 function mergeBot(){const B=S.bot;if(!B||!B.tenant)return;S.set={...S.set,methods:B.methods||[],supportLink:B.supportLink||'',siteName:B.siteName||S.set.siteName,notice:'',banners:[],tutorialLink:''}}
 async function loadBot(){
@@ -711,8 +748,9 @@ async function rbManage(b){
   <button class="btn" id="rbTg" style="background:${b.active?'#dc2626':'#16a34a'};box-shadow:none">${b.active?'বট বন্ধ করুন':'বট চালু করুন'}</button></div>
 
   <div class="sec"><i class="fa-solid fa-percent"></i>দাম ও লাভ</div>
-  <div class="pc"><div style="font-size:13px;color:var(--mu);line-height:1.6">আপনার খরচ = LEAF এর রেট। কাস্টমারের দাম = খরচ + লাভ%। আলাদা দাম দিলে সেটা ওই সার্ভিসের জন্য সবার ওপরে চলবে। খরচের নিচে দাম দেওয়া যায় না।</div>
+  <div class="pc"><div style="font-size:13px;color:var(--mu);line-height:1.6">আপনার খরচ = LEAF এর রেট। কাস্টমারের দাম = খরচ + লাভ % + নির্দিষ্ট ৳। দুটো একসাথেও দেওয়া যায়, যেকোনো একটাও। আলাদা দাম দিলে সেটা ওই সার্ভিসের জন্য সবার ওপরে চলবে। খরচের নিচে দাম দেওয়া যায় না।</div>
   <label class="l">সব সার্ভিসে লাভ (%)</label><input id="rbM" type="number" step="0.1" min="0" value="${b.margin||0}">
+  <label class="l">সব সার্ভিসে নির্দিষ্ট ৳ বাড়ান (প্রতি ১০০০ এ)</label><input id="rbF" type="number" step="0.01" min="0" value="${b.flat||0}" placeholder="যেমন 5">
   <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-top:10px"><input type="checkbox" id="rbKeep" style="width:auto"> আলাদা করে দেওয়া দামগুলো না মুছে রাখুন</label>
   <button class="btn" id="rbMb">সব সার্ভিসে প্রয়োগ করুন</button></div>
   <label class="l">সার্ভিস খুঁজুন (ID / নাম / ক্যাটাগরি)</label><input id="rbQ" placeholder="যেমন: instagram followers"><div id="rbPl" style="margin-top:10px"><div class="empty">লোড হচ্ছে...</div></div>
@@ -744,8 +782,8 @@ async function rbManage(b){
   $('#rbBs').onclick=async()=>{const t=$('#rbBc').value.trim();if(!t)return toast('মেসেজ লিখুন','er');const r=await api('/rb/broadcast',{text:t});r.error?toast(r.error,'er'):(toast('ব্রডকাস্ট শুরু হয়েছে','ok'),$('#rbBc').value='')};
   const ph=(id,key)=>$(id).onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('আপলোড হচ্ছে...');try{const r=await api('/rb/photo',{key,image:await img64(f)});r.error?toast(r.error,'er'):(toast('✅ ছবি সেভ হয়েছে','ok'),loadBot())}catch{toast('ছবি পড়া যায়নি','er')}};
   ph('#rbPo','orderPhoto');ph('#rbPx','xpPhoto');
-  $('#rbMb').onclick=async()=>{const v=+$('#rbM').value;if(isNaN(v)||v<0)return toast('সঠিক লাভ % দিন','er');if(!confirm(`সব সার্ভিসে ${v}% লাভ বসবে${$('#rbKeep').checked?'':' এবং আলাদা দামগুলো মুছে যাবে'}। নিশ্চিত?`))return;
-    const r=await api('/rb/prices/bulk',{margin:v,keepCustom:$('#rbKeep').checked});if(r.error)return toast(r.error,'er');toast('✅ সব সার্ভিসের দাম আপডেট হয়েছে','ok');loadBot();rbPrices()};
+  $('#rbMb').onclick=async()=>{const v=+$('#rbM').value,fl=+$('#rbF').value||0;if(isNaN(v)||v<0||fl<0)return toast('সঠিক লাভ দিন','er');if(!confirm(`সব সার্ভিসে ${v}%${fl?' + ৳'+fl+' (প্রতি ১০০০)':''} লাভ বসবে${$('#rbKeep').checked?'':' এবং আলাদা দামগুলো মুছে যাবে'}। নিশ্চিত?`))return;
+    const r=await api('/rb/prices/bulk',{margin:v,flat:fl,keepCustom:$('#rbKeep').checked});if(r.error)return toast(r.error,'er');toast('✅ সব সার্ভিসের দাম আপডেট হয়েছে','ok');loadBot();rbPrices()};
   $('#rbQ').oninput=()=>{S.prN=40;rbPrList()};
   rbPrices();
 }
