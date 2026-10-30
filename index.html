@@ -123,6 +123,56 @@ input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 4
 .lbr .a{font:700 15px Poppins;color:var(--p);white-space:nowrap}
 .lbr.me{background:#eef6ff}
 .rbi{width:100%;margin:4px 0}
+
+/* ===== অ্যানিমেশন ===== */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:1;transform:none}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes shine{0%{transform:translateX(-120%) skewX(-20deg)}60%,100%{transform:translateX(220%) skewX(-20deg)}}
+@keyframes gradmove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}100%{box-shadow:0 0 0 16px rgba(255,255,255,0)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}15%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}45%{transform:rotate(8deg)}60%{transform:rotate(-6deg)}}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.08)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes burst{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.4) rotate(220deg)}}
+@keyframes pulseDot{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+@keyframes sheetUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+section:not(.hide){animation:fadeUp .38s ease both}
+.oc,.hi,.mi,.pm,.gc,.row,.lbr,.lbt>div{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.oc:nth-child(2),.hi:nth-child(2),.mi:nth-child(2),.pm:nth-child(2),.gc:nth-child(2),.lbr:nth-child(2){animation-delay:.05s}
+.oc:nth-child(3),.hi:nth-child(3),.mi:nth-child(3),.pm:nth-child(3),.gc:nth-child(3),.lbr:nth-child(3){animation-delay:.1s}
+.oc:nth-child(4),.hi:nth-child(4),.mi:nth-child(4),.pm:nth-child(4),.gc:nth-child(4),.lbr:nth-child(4){animation-delay:.15s}
+.oc:nth-child(5),.hi:nth-child(5),.mi:nth-child(5),.gc:nth-child(5),.lbr:nth-child(5){animation-delay:.2s}
+.oc:nth-child(n+6),.hi:nth-child(n+6),.mi:nth-child(n+6),.gc:nth-child(n+6),.lbr:nth-child(n+6){animation-delay:.25s}
+.bal{background:linear-gradient(120deg,#2196f3,#1565c0,#7c4dff,#1e88e5);background-size:300% 300%;animation:gradmove 9s ease infinite}
+.bal i{animation:floaty 3.2s ease-in-out infinite}
+.banner{animation:pop .6s both}.slide.on img{animation:kb 6s ease-out both}
+.btn{position:relative;overflow:hidden;transition:transform .15s,box-shadow .2s}
+.btn:not(:disabled)::after{content:"";position:absolute;top:0;bottom:0;width:38%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:shine 3.4s ease-in-out infinite}
+.btn:active{transform:scale(.96)}
+.mi,.pm,.chip,.plat div,.oc{transition:transform .18s,box-shadow .2s,border-color .2s}
+.mi:active,.pm:active,.chip:active,.oc:active{transform:scale(.97)}
+.plat div:active{transform:scale(.9)}
+.nav a{transition:transform .2s,color .2s}.nav a:active{transform:scale(.88)}
+.nav a.on i:not(:first-child),.nav a.on>i{animation:floaty 2.4s ease-in-out infinite}
+.nav a.home i{animation:ring 2.2s ease-out infinite}
+#bell .fa-bell,#bell i{transform-origin:top center}
+#bell:has(+*),#bell{}
+.dot{animation:pulseDot 1.4s ease-in-out infinite}
+.top .ic:hover i{animation:wiggle .8s}
+.av{animation:pop .6s both}.av img{display:block}
+.pc{animation:pop .5s both}
+.bar i{transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.modal>div{animation:sheetUp .32s cubic-bezier(.2,.8,.2,1) both}
+.toast{transition:transform .45s cubic-bezier(.2,1.2,.3,1)}
+#load .spin{animation:s .8s linear infinite,floaty 2s ease-in-out infinite}
+.st{transition:background .3s}
+.st.pending{animation:pulseDot 2s ease-in-out infinite}
+.ok-burst{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.ok-burst .c{width:110px;height:110px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 40px rgba(22,163,74,.5);animation:pop .45s both}
+.ok-burst svg{width:60px;height:60px}.ok-burst path{stroke:#fff;stroke-width:6;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .5s .25s ease forwards}
+.ok-burst .p{position:absolute;width:10px;height:10px;border-radius:3px;animation:burst 1s ease-out forwards}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -202,7 +252,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 4
     <div class="top"><h2>Commission</h2><div class="ic" style="opacity:0"></div></div>
     <div class="pad">
       <div class="bal"><small>মোট রেফার ইনকাম</small><h1 id="rEarn">৳0.00</h1><small id="rCnt">0 জন রেফার</small><i class="fa-solid fa-gift"></i></div>
-      <div class="how">আপনার রেফার কোড: <b id="rCode"></b><br>আপনার লিংক দিয়ে কেউ রেজিস্টার করে ডিপোজিট করলে আপনি <b id="rPct">0</b>% কমিশন পাবেন।</div>
+      <div class="how">আপনার আইডি: <b id="rCode"></b><br>আপনার লিংক দিয়ে কেউ রেজিস্টার করে ডিপোজিট করলে আপনি <b id="rPct">0</b>% কমিশন পাবেন।</div>
       <button class="btn" id="rCopy"><i class="fa-regular fa-copy"></i> রেফার লিংক কপি করুন</button>
       <div class="sec" style="margin-top:24px"><i class="fa-solid fa-users"></i>আমার টিম</div><div id="rList"></div>
     </div>
@@ -417,7 +467,7 @@ $('#order').onclick=async()=>{
   const charge=+(s.rate*q/1000*(1-disc()/100)).toFixed(4),b=$('#order');b.disabled=true;
   try{
     const jo=await api('/u/order',{serviceId:s._id,link,quantity:q});if(jo.error)throw new Error(jo.error);syncNow(true);
-    toast('✅ অর্ডার সফল হয়েছে','ok');$('#link').value='';$('#qty').value='';calc();go('orders');
+    toast('✅ অর্ডার সফল হয়েছে','ok');celebrate();$('#link').value='';$('#qty').value='';calc();go('orders');
   }catch(e){toast(e.message,'er')}
   b.disabled=false;
 };
@@ -437,7 +487,7 @@ function rOrders(){
 $('#oq').oninput=rOrders;
 
 /* ---------- FUNDS ---------- */
-function rFunds(){$('#fBal').textContent=(S.me?.balance||0).toFixed(2)}
+function rFunds(){countUp($('#fBal'),+(S.me?.balance||0))}
 function rPms(){
   const m=S.set.methods||[];
   $('#pms').innerHTML=m.map((x,i)=>`<div class="pm ${S.pm===i?'on':''}" data-i="${i}"><div class="ico"><i class="fa-solid fa-mobile-screen-button"></i></div><div><b style="font-size:17px">${esc(x.name)}</b><div style="font-size:13px;color:var(--mu)">${esc(x.note||'Send Money')}</div></div><span class="r"></span></div>`).join('')||'<div class="empty">অ্যাডমিন এখনো পেমেন্ট মেথড যোগ করেননি</div>';
@@ -451,14 +501,14 @@ $('#dBtn').onclick=async()=>{
   if(from.length<6||trx.length<6)return toast('নাম্বার ও TrxID সঠিকভাবে দিন','er');
   const b=$('#dBtn');b.disabled=true;
   try{const jd=await api('/u/deposit',{method:m.name,amount:amt,from,trx});if(jd.error)throw new Error(jd.error);syncNow(true);
-    toast('✅ রিকোয়েস্ট জমা হয়েছে, অ্যাডমিন যাচাই করে ব্যালেন্স যোগ করবেন','ok');$('#dAmt').value=$('#dFrom').value=$('#dTrx').value='';$('#payForm').classList.add('hide');S.pm=null;rPms();
+    toast('✅ রিকোয়েস্ট জমা হয়েছে, অ্যাডমিন যাচাই করে ব্যালেন্স যোগ করবেন','ok');celebrate();$('#dAmt').value=$('#dFrom').value=$('#dTrx').value='';$('#payForm').classList.add('hide');S.pm=null;rPms();
   }catch(e){toast(errMsg(e),'er')}b.disabled=false;
 };
 function rDeps(){$('#dHist').innerHTML=S.deps.map(d=>`<div class="hi"><div><b>${tk(d.amount)}</b> <small style="color:var(--mu)">${esc(d.method)}</small><div style="font-size:12px;color:var(--mu)">${esc(d.trx)} • ${fd(d.createdAt)}</div></div><span class="st ${d.status=='approved'?'completed':d.status=='rejected'?'canceled':'pending'}">${d.status}</span></div>`).join('')||'<div class="empty"><i class="fa-solid fa-receipt"></i>কোনো ইতিহাস নেই</div>'}
 
 /* ---------- REFERRAL ---------- */
 function rRef(){
-  if(!S.me)return;const code=S.uid;
+  if(!S.me)return;const code=tgUser&&!S.bot?.tenant?tgUser.id:(tgUser?tgUser.id:S.uid);
   $('#rCode').textContent=code;$('#rPct').textContent=S.set.refPercent||0;$('#rEarn').textContent=tk(S.me.refEarned);$('#rCnt').textContent=S.team.length+' জন রেফার';
   $('#rList').innerHTML=S.team.map(t=>`<div class="hi"><b>${esc(t.name)}</b><small style="color:var(--mu)">${fd(t.createdAt)}</small></div>`).join('')||'<div class="empty"><i class="fa-solid fa-user-plus"></i>এখনো কেউ রেফার হয়নি</div>';
 }
@@ -468,7 +518,9 @@ $('#rCopy').onclick=async()=>{const bu=S.bot&&S.bot.bot,bl=S.set.botLink,l=bu?'h
 function rSet(){
   const m=S.me;if(!m)return;const LV=lvl();const sp=m.totalSpent||0;
   let li=0;LV.forEach((l,i)=>{if(sp>=l[1])li=i});const nx=LV[li+1];
-  $('#sAv').textContent=(m.name||'U')[0].toUpperCase();$('#sName').textContent=m.name;$('#sMail').textContent=m.email;$('#sLvl').textContent=LV[li][0]+' সদস্য';
+  const tn=tgUser?([tgUser.first_name,tgUser.last_name].filter(Boolean).join(' ')||tgUser.username||m.name):m.name,av=$('#sAv');
+  if(tgUser&&tgUser.photo_url){av.innerHTML=`<img src="${esc(tgUser.photo_url)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover" onerror="this.remove();this.parentNode.textContent='${esc((tn||'U')[0].toUpperCase())}'">`}else av.textContent=(tn||'U')[0].toUpperCase();
+  $('#sName').textContent=tn;$('#sMail').innerHTML=tgUser?`${tgUser.username?'<i class="fa-brands fa-telegram" style="color:#2aabee"></i> @'+esc(tgUser.username)+' • ':''}<i class="fa-solid fa-id-badge"></i> ID: <b>${tgUser.id}</b>`:esc(m.email);$('#sLvl').textContent=LV[li][0]+' সদস্য';
   const days=m.createdAt?.toDate?Math.max(1,Math.ceil((Date.now()-m.createdAt.toDate())/864e5)):1;$('#sAge').textContent=days+' দিন';
   const pct=nx?Math.min(100,(sp-LV[li][1])/(nx[1]-LV[li][1])*100):100;$('#sBar').style.width=pct+'%';$('#sPct').textContent='অগ্রগতি: '+pct.toFixed(1)+'%';$('#sNext').textContent=nx?`পরবর্তী: ${nx[0]} যেতে ${tk(nx[1]-sp)} প্রয়োজন`:'সর্বোচ্চ লেভেল 🎉';
   const t0=new Date();t0.setHours(0,0,0,0);const td=S.orders.filter(o=>o.createdAt?.toDate&&o.createdAt.toDate()>=t0);
@@ -583,6 +635,22 @@ function startCatalog(){
 }
 
 /* ---------- রিসেলার বট: সার্ভার কল, দাম, ম্যানেজ প্যানেল ---------- */
+
+
+/* ---------- অ্যানিমেশন হেল্পার ---------- */
+function celebrate(){
+  const d=document.createElement('div');d.className='ok-burst';
+  const cols=['#f59e0b','#3b82f6','#ec4899','#10b981','#8b5cf6','#ef4444'];
+  let h='<div class="c"><svg viewBox="0 0 60 60"><path d="M14 31 L26 42 L47 19"/></svg></div>';
+  for(let i=0;i<22;i++){const a=Math.random()*6.28,r=90+Math.random()*110;h+=`<i class="p" style="background:${cols[i%6]};--x:${Math.cos(a)*r}px;--y:${Math.sin(a)*r}px;animation-delay:${.15+Math.random()*.15}s"></i>`}
+  d.innerHTML=h;document.body.appendChild(d);setTimeout(()=>d.remove(),1500);
+  try{TG&&TG.HapticFeedback&&TG.HapticFeedback.notificationOccurred('success')}catch{}
+}
+function countUp(el,to,dec=2){
+  const from=+el._v||0;el._v=to;if(from===to){el.textContent=to.toFixed(dec);return}
+  const t0=performance.now(),D=700;
+  const f=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=(from+(to-from)*e).toFixed(dec);if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f);
+}
 
 /* ---------- ইউজারের ডাটা: বট সার্ভার থেকে (১৫ সেকেন্ডে একবার, কিছু বদলালে তবেই) ---------- */
 async function initProfile(){
