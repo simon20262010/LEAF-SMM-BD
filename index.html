@@ -279,13 +279,13 @@ const firebaseConfig = {
 /* ============================================================ */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,signInWithCustomToken,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,updateProfile,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,onSnapshot,collection,query,where,addDoc,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const app=initializeApp(firebaseConfig),auth=getAuth(app);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tk=n=>'৳'+(+n||0).toFixed(2);
 const fd=t=>t?.toDate?t.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'...';
+const fx=o=>{if(Array.isArray(o))return o.map(fx);if(o&&typeof o=='object'){if('__ts' in o){const s=o.__ts;return{seconds:s,toDate:()=>new Date(s*1000)}}const r={};for(const k in o)r[k]=fx(o[k]);return r}return o};
 function toast(m,t=''){const e=$('#toast');e.textContent=m;e.className='toast show '+t;clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3200)}
 
 const PLATS=[['all','fa-solid fa-table-cells-large','#fff'],['facebook','fa-brands fa-facebook','#1877f2'],['instagram','fa-brands fa-instagram','#e1306c'],['youtube','fa-brands fa-youtube','#ff0000'],['tiktok','fa-brands fa-tiktok','#000'],['telegram','fa-brands fa-telegram','#2aabee'],['twitter','fa-brands fa-x-twitter','#000'],['whatsapp','fa-brands fa-whatsapp','#25d366'],['other','fa-solid fa-chart-simple','#f97316']];
@@ -315,11 +315,10 @@ $('#aBtn').onclick=async()=>{
     if(mode=='login')await signInWithEmailAndPassword(auth,em,pw);
     else{
       const name=$('#aName').value.trim();if(!name){b.disabled=false;return toast('আপনার নাম দিন','er')}
-      const c=await createUserWithEmailAndPassword(auth,em,pw);
+      S._mk=true;const c=await createUserWithEmailAndPassword(auth,em,pw);
       await updateProfile(c.user,{displayName:name});
       let rb=$('#aRef').value.trim();if(rb===c.user.uid)rb='';
-      await setDoc(doc(db,'users',c.user.uid),{name,email:em,balance:0,totalDeposit:0,totalSpent:0,orderCount:0,xp:0,refEarned:0,refCode:c.user.uid,referredBy:rb,banned:false,tgId:tgUser?tgUser.id:0,tgUser:tgUser?(tgUser.username||''):'',createdAt:serverTimestamp()});
-      if(rb)await setDoc(doc(db,'referrals',c.user.uid),{name,referredBy:rb,createdAt:serverTimestamp()});
+      const tgi=tgUser?{id:tgUser.id,username:tgUser.username||''}:null;const ji=await api('/u/init',{name,ref:rb,tg:tgi});S._mk=false;if(ji.error)throw new Error(ji.error);syncNow(true);
     }
   }catch(e){toast(errMsg(e),'er')}
   b.disabled=false;
@@ -328,7 +327,12 @@ $('#forgot').onclick=async()=>{const em=$('#aEmail').value.trim();if(!em)return 
 function errMsg(e){const c=e.code||'';if(c.includes('invalid-credential')||c.includes('wrong-password')||c.includes('user-not-found'))return'ইমেইল বা পাসওয়ার্ড ভুল';if(c.includes('email-already'))return'এই ইমেইল আগে থেকেই আছে';if(c.includes('weak'))return'পাসওয়ার্ড দুর্বল';if(c.includes('network'))return'ইন্টারনেট সংযোগ নেই';return e.message||'কিছু ভুল হয়েছে'}
 
 /* ---------- টেলিগ্রাম অটো-লগইন (বট সার্ভার দরকার) ---------- */
-async function botServer(){if(S._bs!==undefined)return S._bs;try{const d=await getDoc(doc(db,'public','config'));S._bs=d.exists()?(d.data().botServer||''):''}catch(e){S._bs=''}return S._bs}
+const BOT_SERVER='';
+async function botServer(){
+  if(S._bs)return S._bs;if(BOT_SERVER)return S._bs=BOT_SERVER;
+  let c='';try{c=localStorage.getItem('leafBS')||''}catch{}
+  if(!c){try{const r=await fetch('https://firestore.googleapis.com/v1/projects/'+firebaseConfig.projectId+'/databases/(default)/documents/public/config?key='+firebaseConfig.apiKey),j=await r.json();c=j.fields?.botServer?.stringValue||'';if(c){try{localStorage.setItem('leafBS',c)}catch{}}}catch{}}
+  if(c)S._bs=c;return c}
 async function tgLogin(){
   try{const bs=await botServer();if(!bs)return false;
     const r=await fetch(bs.replace(/\/$/,'')+'/auth/telegram',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:TG.initData})});
@@ -341,7 +345,7 @@ async function tgLogin(){
 
 /* ---------- SESSION (একবার লগইন করলেই থাকবে) ---------- */
 onAuthStateChanged(auth,u=>{
-  S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._catT);
+  S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._catT);clearInterval(S._pt);S._h='';
   $('#load').classList.add('hide');
   if(u&&TG&&TG.initData&&tgUser&&!S._fix){const ex=BOTID?`rb${BOTID}_${tgUser.id}`:`tg${tgUser.id}`;
     if(u.uid!==ex&&(BOTID||/^(tg|rb)/.test(u.uid))){S._fix=true;S._tgTry=false;$('#load').classList.remove('hide');signOut(auth);return}}
@@ -349,21 +353,7 @@ onAuthStateChanged(auth,u=>{
     if(TG&&TG.initData&&!S._tgTry){S._tgTry=true;$('#load').classList.remove('hide');tgLogin().then(ok=>{if(!ok){$('#load').classList.add('hide');$('#app').classList.add('hide');$('#auth').classList.remove('hide')}});return}
     $('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
   S.uid=u.uid;S.bot=null;$('#auth').classList.add('hide');$('#app').classList.remove('hide');loadBot();
-  const L=(ref,fn)=>S.unsub.push(onSnapshot(ref,fn,e=>console.warn(e.code)));
-  L(doc(db,'users',u.uid),async s=>{
-    if(!s.exists()){
-      if(S._mk)return;S._mk=true;
-      try{await setDoc(doc(db,'users',u.uid),{name:u.displayName||(u.email||'User').split('@')[0],email:u.email||'',balance:0,totalDeposit:0,totalSpent:0,orderCount:0,xp:0,refEarned:0,refCode:u.uid,referredBy:'',banned:false,tgId:tgUser?tgUser.id:0,tgUser:tgUser?(tgUser.username||''):'',createdAt:serverTimestamp()})}catch(e){S._mk=false;toast('প্রোফাইল তৈরি হয়নি: '+errMsg(e),'er')}
-      return;
-    }
-    S._mk=false;S.me=s.data();renderAll()});
-  startCatalog(L);
-  L(query(collection(db,'orders'),where('uid','==',u.uid)),s=>{S.orders=s.docs.map(d=>({_id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rOrders();rSet()});
-  L(query(collection(db,'deposits'),where('uid','==',u.uid)),s=>{S.deps=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rDeps()});
-  L(query(collection(db,'tickets'),where('uid','==',u.uid)),s=>{S.tix=s.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));rTix()});
-  L(query(collection(db,'requests'),where('uid','==',u.uid)),s=>{S.reqs=s.docs.map(d=>({_id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));if(S._rq)S._rq()});
-  L(doc(db,'settings','leaderboard'),s=>{S.lb=s.exists()?s.data():null});
-  L(query(collection(db,'referrals'),where('referredBy','==',u.uid)),s=>{S.team=s.docs.map(d=>d.data());rRef()});
+  startCatalog();startSync();
 });
 
 /* ---------- NAV ---------- */
@@ -426,13 +416,7 @@ $('#order').onclick=async()=>{
   if(!q||q<s.min||q>s.max)return toast(`পরিমাণ ${s.min} থেকে ${s.max} এর মধ্যে হতে হবে`,'er');
   const charge=+(s.rate*q/1000*(1-disc()/100)).toFixed(4),b=$('#order');b.disabled=true;
   try{
-    await runTransaction(db,async tx=>{
-      const ur=doc(db,'users',S.uid),u=(await tx.get(ur)).data();
-      if(!u)throw new Error('প্রোফাইল পাওয়া যায়নি, পেজ রিফ্রেশ করুন');
-      if(u.balance<charge)throw new Error('ব্যালেন্স যথেষ্ট নয়, ফান্ড অ্যাড করুন');
-      tx.update(ur,{balance:+(u.balance-charge).toFixed(4),totalSpent:+((u.totalSpent||0)+charge).toFixed(4),orderCount:(u.orderCount||0)+1,xp:(u.xp||0)+(+S.set.xpPerOrder||0)+Math.floor(charge*(+S.set.xpPerTaka||0))});
-      tx.set(doc(collection(db,'orders')),{uid:S.uid,userName:u.name,orderNo:String(Date.now()).slice(-8),serviceId:s._id,sid:s.sid,serviceName:s.name,link,quantity:q,charge,status:'pending',refunded:false,createdAt:serverTimestamp()});
-    });
+    const jo=await api('/u/order',{serviceId:s._id,link,quantity:q});if(jo.error)throw new Error(jo.error);syncNow(true);
     toast('✅ অর্ডার সফল হয়েছে','ok');$('#link').value='';$('#qty').value='';calc();go('orders');
   }catch(e){toast(e.message,'er')}
   b.disabled=false;
@@ -466,7 +450,7 @@ $('#dBtn').onclick=async()=>{
   if(!amt||amt<min)return toast(`ন্যূনতম ডিপোজিট ৳${min}`,'er');
   if(from.length<6||trx.length<6)return toast('নাম্বার ও TrxID সঠিকভাবে দিন','er');
   const b=$('#dBtn');b.disabled=true;
-  try{await addDoc(collection(db,'deposits'),{uid:S.uid,userName:S.me.name,method:m.name,amount:amt,from,trx,status:'pending',createdAt:serverTimestamp()});
+  try{const jd=await api('/u/deposit',{method:m.name,amount:amt,from,trx});if(jd.error)throw new Error(jd.error);syncNow(true);
     toast('✅ রিকোয়েস্ট জমা হয়েছে, অ্যাডমিন যাচাই করে ব্যালেন্স যোগ করবেন','ok');$('#dAmt').value=$('#dFrom').value=$('#dTrx').value='';$('#payForm').classList.add('hide');S.pm=null;rPms();
   }catch(e){toast(errMsg(e),'er')}b.disabled=false;
 };
@@ -496,7 +480,7 @@ $('#mPass').onclick=async()=>{try{await sendPasswordResetEmail(auth,S.me.email);
 $('#mSup').onclick=()=>S.set.supportLink?openL(S.set.supportLink):toast('সাপোর্ট লিংক সেট করা নেই','er');
 $('#mTicket').onclick=()=>$('#tModal').classList.remove('hide');$('#tClose').onclick=()=>$('#tModal').classList.add('hide');
 $('#tSend').onclick=async()=>{const s=$('#tSub').value.trim(),m=$('#tMsg').value.trim();if(!S.me)return toast('প্রোফাইল লোড হচ্ছে','er');if(!s||!m)return toast('বিষয় ও মেসেজ লিখুন','er');
-  try{await addDoc(collection(db,'tickets'),{uid:S.uid,userName:S.me.name,subject:s,message:m,reply:'',status:'open',createdAt:serverTimestamp()});$('#tSub').value=$('#tMsg').value='';toast('টিকেট জমা হয়েছে','ok')}catch(e){toast(errMsg(e),'er')}};
+  try{const jt=await api('/u/ticket',{subject:s,message:m});if(jt.error)throw new Error(jt.error);syncNow(true);$('#tSub').value=$('#tMsg').value='';toast('টিকেট জমা হয়েছে','ok')}catch(e){toast(errMsg(e),'er')}};
 function rTix(){$('#tList').innerHTML=S.tix.map(t=>`<div class="hi" style="display:block"><div style="display:flex;justify-content:space-between"><b>${esc(t.subject)}</b><span class="st ${t.status=='open'?'pending':'completed'}">${t.status}</span></div><div style="font-size:14px;margin-top:6px">${esc(t.message)}</div>${t.reply?`<div class="how" style="margin-top:8px"><b style="font-size:13px">অ্যাডমিন:</b> ${esc(t.reply)}</div>`:''}</div>`).join('')||'<div class="empty">কোনো টিকেট নেই</div>'}
 
 /* ---------- EXTRA MENU ---------- */
@@ -517,7 +501,7 @@ function reqForm(type){
   $('#rqS').onclick=async()=>{
     const o=S.orders.find(x=>x._id==$('#rqO').value);if(!o||!S.me)return toast('অর্ডার সিলেক্ট করুন','er');
     if(S.reqs.some(r=>r.orderId==o._id&&r.type==type&&r.status=='pending'))return toast('এই অর্ডারে আগের রিকোয়েস্ট এখনো পেন্ডিং','er');
-    try{await addDoc(collection(db,'requests'),{uid:S.uid,userName:S.me.name,type,orderId:o._id,orderNo:o.orderNo,serviceName:o.serviceName,note:$('#rqN').value.trim(),status:'pending',createdAt:serverTimestamp()});toast('রিকোয়েস্ট জমা হয়েছে','ok');$('#rqN').value=''}catch(e){toast(errMsg(e),'er')}};
+    try{const jq=await api('/u/request',{type,orderId:o._id,note:$('#rqN').value.trim()});if(jq.error)throw new Error(jq.error);syncNow(true);toast('রিকোয়েস্ট জমা হয়েছে','ok');$('#rqN').value=''}catch(e){toast(errMsg(e),'er')}};
 }
 $('#mRf').onclick=()=>reqForm('refund');$('#mRl').onclick=()=>reqForm('refill');
 
@@ -536,9 +520,8 @@ $('#mXp').onclick=()=>{
   $('#xpB').onclick=async()=>{const x=parseInt($('#xpA').value)||0,bdt=cv();
     if(x<Math.max(min,rate))return toast(`কমপক্ষে ${Math.max(min,rate)} XP দিন`,'er');
     const b=$('#xpB');b.disabled=true;
-    try{await runTransaction(db,async tx=>{const r=doc(db,'users',S.uid),u=(await tx.get(r)).data();if(!u||(u.xp||0)<x)throw new Error('পর্যাপ্ত XP নেই');tx.update(r,{xp:u.xp-x,balance:+((u.balance||0)+bdt).toFixed(4)})});
-      try{await addDoc(collection(db,'xpLogs'),{uid:S.uid,userName:S.me.name,xp:x,bdt,createdAt:serverTimestamp()})}catch{}
-      toast(`✅ ${tk(bdt)} ব্যালেন্সে যোগ হয়েছে`,'ok');$('#gModal').classList.add('hide')}catch(e){toast(e.message.includes('permission')?'কনভার্ট করা যায়নি, আবার চেষ্টা করুন':e.message,'er')}
+    try{const jx=await api('/u/xp',{xp:x});if(jx.error)throw new Error(jx.error);syncNow(true);
+      toast(`✅ ${tk(jx.bdt)} ব্যালেন্সে যোগ হয়েছে`,'ok');$('#gModal').classList.add('hide')}catch(e){toast(e.message,'er')}
     b.disabled=false}};
 
 const bnum=x=>String(x).replace(/\d/g,d=>'০১২৩৪৫৬৭৮৯'[d]),btk=n=>bnum('৳'+(+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}));
@@ -556,16 +539,28 @@ $('#mLb').onclick=async()=>{
   <button class="btn" id="lbGo">অর্ডার করে তালিকায় আসুন</button></div>`);
   $('#lbGo').onclick=()=>{S._rq=null;$('#gModal').classList.add('hide');go('home')}};
 
-$('#mApi').onclick=async()=>{
-  const bs=(await botServer()).replace(/\/$/,''),k=S.me?.apiKey;
-  if(!k||!bs){G(`<h3 style="margin:0 0 10px">🔑 রিসেলার API</h3><div style="font-size:14px;line-height:1.7">API কী পেতে টেলিগ্রাম বটে গিয়ে <b>🔑 Get Reseller API</b> বাটনে চাপুন। তারপর এখানে কী ও URL দেখাবে।</div>`);return}
-  const u=bs+'/api/v2';
-  G(`<h3 style="margin:0 0 10px">🔑 রিসেলার API</h3>
-  <div style="font-size:12px;color:#64748b">API URL</div><input readonly value="${esc(u)}" style="width:100%;margin:4px 0 10px" onclick="this.select()">
-  <div style="font-size:12px;color:#64748b">API Key ${S.me.apiActive===false?'(⛔ বন্ধ)':''}</div><input readonly value="${esc(k)}" style="width:100%;margin:4px 0 10px" onclick="this.select()">
-  <div style="font-size:13px;line-height:1.8;background:#f1f5f9;padding:10px;border-radius:10px;word-break:break-all">
-  <b>Balance:</b> ?key=KEY&amp;action=balance<br><b>Services:</b> ?key=KEY&amp;action=services<br><b>Add:</b> ?key=KEY&amp;action=add&amp;service=ID&amp;link=URL&amp;quantity=N<br><b>Status:</b> ?key=KEY&amp;action=status&amp;order=ORDER_ID</div>
-  <div style="font-size:12px;color:#64748b;margin-top:8px">নতুন কী বা বন্ধ করতে বটের Get Reseller API মেনু ব্যবহার করুন।</div>`)};
+$('#mApi').onclick=()=>apiPanel();
+const copyTxt=async t=>{try{await navigator.clipboard.writeText(t);toast('কপি হয়েছে','ok')}catch{const i=document.createElement('textarea');i.value=t;document.body.appendChild(i);i.select();try{document.execCommand('copy');toast('কপি হয়েছে','ok')}catch{toast('কপি হয়নি, চেপে ধরে কপি করুন','er')}i.remove()}};
+async function apiPanel(act){
+  G('<div class="empty"><i class="fa-solid fa-key"></i>লোড হচ্ছে...</div>');
+  const j=await api('/u/apikey',{action:act||'get'}).catch(()=>({error:'সার্ভারে সংযোগ হয়নি'}));
+  if(j.error)return G(`<div class="sec"><i class="fa-solid fa-key"></i>রিসেলার API</div><div class="empty">${esc(j.error)}</div>`);
+  const has=!!j.key,u=j.url||'';
+  const fld=(l,v,id)=>`<div style="font-size:12px;color:var(--mu);margin:12px 0 5px">${l}</div><div style="display:flex;gap:8px;align-items:center"><input readonly id="${id}" value="${esc(v)}" onclick="this.select()" style="flex:1;margin:0;font:600 13px ui-monospace,Menlo,monospace;letter-spacing:.2px"><button class="btn" data-cp="${id}" style="width:auto;padding:0 16px;height:46px;margin:0;box-shadow:none"><i class="fa-regular fa-copy"></i></button></div>`;
+  const ex=(t,c)=>`<div style="background:#0f172a;color:#e2e8f0;border-radius:12px;padding:10px 12px;margin-top:8px;font:12.5px/1.6 ui-monospace,Menlo,monospace;word-break:break-all"><div style="color:#7dd3fc;font-weight:700;margin-bottom:2px">${t}</div>${c}</div>`;
+  G(`<div style="background:linear-gradient(135deg,#2196f3,#1565c0);color:#fff;border-radius:18px;padding:16px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center"><div><div style="font:700 20px 'Hind Siliguri'">রিসেলার API</div><small style="opacity:.92">নিজের সাইট বা প্যানেল থেকে অর্ডার দিন</small></div><i class="fa-solid fa-code" style="font-size:32px;opacity:.9"></i></div>
+  ${has?`<div style="display:flex;align-items:center;gap:8px;margin:12px 0 0"><span class="st ${j.active?'completed':'canceled'}">${j.active?'● চালু আছে':'● বন্ধ আছে'}</span><small style="color:var(--mu)">এই কী মিনি অ্যাপ ও বট দুই জায়গাতেই একই</small></div>
+  ${fld('API URL',u,'apU')}${fld('API Key',j.key,'apK')}
+  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn" id="apN" style="margin:0;background:#f59e0b;box-shadow:none"><i class="fa-solid fa-rotate"></i> নতুন কী</button><button class="btn" id="apT" style="margin:0;background:${j.active?'#ef4444':'#16a34a'};box-shadow:none"><i class="fa-solid fa-power-off"></i> ${j.active?'বন্ধ করুন':'চালু করুন'}</button></div>
+  <div class="sec" style="margin-top:20px"><i class="fa-solid fa-terminal"></i>কীভাবে ব্যবহার করবেন</div>
+  ${ex('ব্যালেন্স','?key=<b>KEY</b>&amp;action=balance')}${ex('সার্ভিস তালিকা','?key=<b>KEY</b>&amp;action=services')}${ex('অর্ডার দিন','?key=<b>KEY</b>&amp;action=add&amp;service=<b>ID</b>&amp;link=<b>URL</b>&amp;quantity=<b>N</b>')}${ex('অর্ডার স্ট্যাটাস','?key=<b>KEY</b>&amp;action=status&amp;order=<b>ORDER_ID</b>')}
+  <div style="font-size:12px;color:var(--mu);margin-top:10px;line-height:1.6">⚠️ কী কাউকে দেবেন না। নতুন কী বানালে পুরোনোটা সাথে সাথে অচল হয়ে যাবে।</div>`
+  :`<div style="text-align:center;padding:24px 8px"><div style="font-size:46px">🔑</div><div style="font:700 17px 'Hind Siliguri';margin:8px 0 4px">আপনার এখনো API কী নেই</div><div style="font-size:13px;color:var(--mu);margin-bottom:16px;line-height:1.7">নিচের বাটনে চাপলেই কী তৈরি হবে। এটা দিয়ে আপনি নিজের সাইট থেকে সরাসরি অর্ডার দিতে পারবেন।</div><button class="btn" id="apG">কী তৈরি করুন</button></div>`}`);
+  $$('[data-cp]').forEach(b=>b.onclick=()=>copyTxt($('#'+b.dataset.cp).value));
+  if($('#apG'))$('#apG').onclick=()=>apiPanel('new');
+  if($('#apN'))$('#apN').onclick=()=>{if(confirm('নতুন কী বানালে পুরোনোটা আর কাজ করবে না। নিশ্চিত?'))apiPanel('new')};
+  if($('#apT'))$('#apT').onclick=()=>apiPanel('toggle');
+}
 $('#mTut').onclick=()=>S.set.tutorialLink?openL(S.set.tutorialLink):toast('টিউটোরিয়াল লিংক সেট করা নেই','er');
 
 /* ---------- সার্ভিস/সেটিংস: বট সার্ভার থেকে (ফোনে জমা রেখে), ব্যর্থ হলে সরাসরি Firebase ---------- */
@@ -576,23 +571,37 @@ async function fetchCatalog(){
   const tok=await auth.currentUser.getIdToken(),ac=new AbortController(),t=setTimeout(()=>ac.abort(),9000);
   try{const r=await fetch(bs+'/public/catalog',{headers:{Authorization:'Bearer '+tok},signal:ac.signal});if(!r.ok)throw new Error('http');return await r.json()}finally{clearTimeout(t)}
 }
-function fbCatalog(L){
-  if(S._fbc)return;S._fbc=true;
-  L(doc(db,'settings','main'),s=>{S.set=s.data()||{};mergeBot();renderAll()});
-  L(query(collection(db,'services'),where('enabled','==',true)),s=>{S.raw=s.docs.map(d=>({_id:d.id,...d.data()}));applyPrices()});
-}
-function startCatalog(L){
+function startCatalog(){
   let cached=null;try{cached=JSON.parse(localStorage.getItem(CK)||'null')}catch{}
   if(cached&&cached.c)applyCatalog(cached.c);
   const run=async()=>{
     try{const c=await fetchCatalog();try{localStorage.setItem(CK,JSON.stringify({t:Date.now(),c}))}catch{}S._catOk=true;applyCatalog(c)}
-    catch(e){if(!S._catOk&&!(cached&&cached.c))fbCatalog(L)}
+    catch(e){console.warn(e);if(!S._catOk&&!(cached&&cached.c)&&!S._ct)S._ct=setTimeout(()=>{S._ct=0;run()},4000)}
   };
   if(!cached||Date.now()-(cached.t||0)>120000)run();
   S._catT=setInterval(run,180000);
 }
 
 /* ---------- রিসেলার বট: সার্ভার কল, দাম, ম্যানেজ প্যানেল ---------- */
+
+/* ---------- ইউজারের ডাটা: বট সার্ভার থেকে (১৫ সেকেন্ডে একবার, কিছু বদলালে তবেই) ---------- */
+async function initProfile(){
+  if(S._mk)return;S._mk=true;
+  try{const u=auth.currentUser,j=await api('/u/init',{name:u.displayName||'',tg:tgUser?{id:tgUser.id,username:tgUser.username||''}:null});
+    if(j.error)toast('প্রোফাইল তৈরি হয়নি: '+j.error,'er');else{S._mk=false;syncNow(true)}}catch(e){toast('প্রোফাইল তৈরি হয়নি','er')}
+  S._mk=false;
+}
+async function syncNow(fresh){
+  if(!auth.currentUser||S._syncing)return;S._syncing=true;
+  try{const j=await api('/u/sync',{h:fresh?'':(S._h||''),fresh:!!fresh});
+    if(j.need_init){S._syncing=false;return initProfile()}
+    if(j.error||j.same)return;
+    S._h=j.h;const x=fx(j);S.me=x.me;S.orders=x.orders;S.deps=x.deps;S.tix=x.tix;S.reqs=x.reqs;S.team=x.team;
+    renderAll();rOrders();rSet();rDeps();rTix();rRef();if(S._rq)S._rq();
+  }catch(e){console.warn(e)}finally{S._syncing=false}
+}
+function startSync(){syncNow(true);clearInterval(S._pt);S._pt=setInterval(()=>{if(!document.hidden)syncNow()},15000)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()});
 async function api(path,body){
   const bs=((await botServer())||'').replace(/\/$/,'');if(!bs)return{error:'বট সার্ভারের ঠিকানা পাওয়া যায়নি'};
   const tok=await auth.currentUser.getIdToken();
