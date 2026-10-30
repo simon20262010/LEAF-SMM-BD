@@ -102,16 +102,17 @@ const firebaseConfig = {
 /* ====================================================================== */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,updatePassword,reauthenticateWithCredential,EmailAuthProvider,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,updateDoc,deleteDoc,onSnapshot,collection,addDoc,runTransaction,serverTimestamp,increment,query,where,getDocs,writeBatch} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+const app=initializeApp(firebaseConfig),auth=getAuth(app);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tk=n=>'৳'+(+n||0).toFixed(2);
 const fd=t=>t?.toDate?t.toDate().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'...';
 const ts=o=>(o.createdAt?.seconds||9e9);
+const fx=o=>{if(Array.isArray(o))return o.map(fx);if(o&&typeof o=='object'){if('__ts' in o){const s=o.__ts;return{seconds:s,toDate:()=>new Date(s*1000)}}const r={};for(const k in o)r[k]=fx(o[k]);return r}return o};
+const inc=n=>({$inc:n});
 function toast(m,t=''){const e=$('#toast');e.textContent=m;e.className='toast show '+t;clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3000)}
-const S={users:[],orders:[],deps:[],svcs:[],tix:[],reqs:[],prov:[],rb:[],rbStale:true,set:{},f:{o:'all',d:'pending',t:'open',uq:'',oq:''},unsub:[]};
+const S={st:{},users:[],orders:[],deps:[],svcs:[],tix:[],reqs:[],prov:[],rb:[],rbStale:true,set:{},f:{o:'all',d:'pending',t:'open',uq:'',oq:''},unsub:[]};
 const OST=['pending','processing','completed','partial','canceled'];
 
 /* LOGIN / FIRST SETUP */
@@ -126,7 +127,7 @@ function applyMode(){
   $('#fg').classList.toggle('hide',setupMode);
   $('#lB').textContent=setupMode?'অ্যাডমিন তৈরি করুন':'লগইন';
 }
-async function chk(){try{setupMode=!(await getDoc(doc(db,'meta','lock'))).exists()}catch{setupMode=false}applyMode()}
+async function chk(){try{const j=await srv('/adm/state',null,true);setupMode=!!j.setup}catch{setupMode=false}applyMode()}
 async function doLogin(){
   const pw=$('#lP').value,em=($('#lE').value.trim()||lsGet('adminEmail')),b=$('#lB');
   if(!em)return toast('ইমেইল দিন','er');if(pw.length<6)return toast('পাসওয়ার্ড কমপক্ষে ৬ অক্ষর','er');
@@ -136,10 +137,8 @@ async function doLogin(){
     settingUp=true;
     try{
       const c=await createUserWithEmailAndPassword(auth,em,pw);
-      const w=writeBatch(db);
-      w.set(doc(db,'admins',c.user.uid),{role:'admin',createdAt:serverTimestamp()});
-      w.set(doc(db,'meta','lock'),{by:c.user.uid,createdAt:serverTimestamp()});
-      await w.commit();lsSet('adminEmail',em);settingUp=false;setupMode=false;await enter(c.user);toast('অ্যাডমিন তৈরি হয়েছে','ok');
+      const sj=await srv('/adm/setup',{});if(sj.error)throw new Error(sj.error);
+      lsSet('adminEmail',em);settingUp=false;setupMode=false;await enter(c.user);toast('অ্যাডমিন তৈরি হয়েছে','ok');
     }catch(e){settingUp=false;toast(e.code=='auth/email-already-in-use'?'এই ইমেইল আগে ব্যবহার হয়েছে, অন্য ইমেইল দিন':'সেটআপ ব্যর্থ: '+e.message,'er')}
   }else{
     try{await signInWithEmailAndPassword(auth,em,pw);lsSet('adminEmail',em)}catch{toast('ইমেইল বা পাসওয়ার্ড ভুল','er')}
@@ -154,28 +153,51 @@ $('#fg').onclick=async()=>{
 };
 $('#out').onclick=()=>signOut(auth);
 async function enter(u){
-  let ok=false;try{ok=(await getDoc(doc(db,'admins',u.uid))).exists()}catch{}
-  if(!ok){toast('এই অ্যাকাউন্টের অ্যাডমিন অনুমতি নেই','er');await signOut(auth);return}
+  let me=null;try{me=await srv('/adm/me',{})}catch{}
+  if(!me||me.error){toast(me&&me.error?me.error:'এই অ্যাকাউন্টের অ্যাডমিন অনুমতি নেই','er');await signOut(auth);return}
+  S.set=fx(me.settings||{});
   $('#login').classList.add('hide');$('#panel').classList.remove('hide');
-  const L=(c,k)=>S.unsub.push(onSnapshot(collection(db,c),s=>{S[k]=s.docs.map(d=>({_id:d.id,...d.data()}));render()},e=>console.warn(c,e.code)));
-  L('users','users');L('orders','orders');L('deposits','deps');L('services','svcs');L('tickets','tix');L('requests','reqs');L('providers','prov');
-  S.unsub.push(onSnapshot(doc(db,'settings','main'),s=>{S.set=s.data()||{};render()}));
+  refresh();clearInterval(S._pt);S._pt=setInterval(()=>{if(!document.hidden)refresh()},10000);
+}
+const NEED={dash:['orders'],orders:['orders'],deps:['deposits'],users:['users'],svcs:['services'],prov:['providers'],reqs:['requests'],tix:['tickets'],rb:[],set:[]};
+const KEY={orders:'orders',deposits:'deps',users:'users',services:'svcs',tickets:'tix',requests:'reqs',providers:'prov'};
+async function load(c){
+  const b={c};
+  if(c=='orders'){if(cur=='dash')b.limit=10;else{b.status=S.f.o;b.q=S.f.oq}}
+  if(c=='deposits')b.status=S.f.d;
+  if(c=='users')b.q=S.f.uq;
+  if(c=='tickets')b.status=S.f.t;
+  const r=await srv('/adm/list',b);if(r.error)throw new Error(r.error);
+  S[KEY[c]]=fx(r.items||[]);
+}
+let _rf=0;
+async function refresh(){
+  const id=++_rf;
+  try{
+    const [st,sm]=await Promise.all([srv('/adm/stats',{}),cur=='set'||cur=='rb'||!S.set.siteName?srv('/adm/me',{}):null]);
+    if(st&&!st.error)S.st=st;
+    if(sm&&!sm.error&&!(cur=='set'&&S._setDirty))S.set=fx(sm.settings||{});
+    await Promise.all([...(NEED[cur]||[]),...(cur!='svcs'&&!S.svcs.length?['services']:[]),...(cur=='prov'||cur=='svcs'?['providers']:[])].filter((v,i,a)=>a.indexOf(v)==i).map(load));
+  }catch(e){console.warn(e)}
+  if(id==_rf&&!(cur=='set'&&document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)))render();
+  else if(id==_rf)badges();
 }
 onAuthStateChanged(auth,async u=>{
   if(settingUp)return;
-  S.unsub.forEach(f=>f());S.unsub=[];
+  S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._pt);
   if(!u){$('#panel').classList.add('hide');$('#login').classList.remove('hide');chk();return}
   await enter(u);
 });
 
 /* NAV */
 let cur='dash';
-$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;render()});
+$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;S._setDirty=false;render();refresh()});
 $('#mm').onclick=()=>$('#side').classList.toggle('open');
 function badge(id,n){const e=$(id);e.textContent=n;e.classList.toggle('hide',!n)}
+function badges(){const t=S.st||{};badge('#cO',t.pending||0);badge('#cD',t.pdeps||0);badge('#cR',t.reqs||0);badge('#cT',t.tix||0)}
 function render(){
   $('#brand').textContent=S.set.siteName||'Admin';
-  badge('#cO',S.orders.filter(o=>o.status=='pending').length);badge('#cD',S.deps.filter(o=>o.status=='pending'&&!String(o.uid||'').startsWith('rb')).length);badge('#cR',S.reqs.filter(o=>o.status=='pending').length);badge('#cT',S.tix.filter(o=>o.status=='open').length);
+  badges();
   ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,set:rSet})[cur]();
 }
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
@@ -185,15 +207,13 @@ const confirmDo=async(msg,fn)=>{if(!confirm(msg))return;try{await fn();toast('�
 
 /* DASHBOARD */
 function rDash(){
-  const t0=new Date();t0.setHours(0,0,0,0);const td=S.orders.filter(o=>o.createdAt?.toDate&&o.createdAt.toDate()>=t0);
-  const ok=S.deps.filter(d=>d.status=='approved'&&!String(d.uid||'').startsWith('rb'));
-  const c=[['#1e88e5','fa-users','মোট ইউজার',S.users.length],['#7c3aed','fa-cart-shopping','মোট অর্ডার',S.orders.length],['#f59e0b','fa-hourglass-half','পেন্ডিং অর্ডার',S.orders.filter(o=>o.status=='pending').length],['#16a34a','fa-sack-dollar','মোট বিক্রি',tk(S.orders.filter(o=>o.status!='canceled').reduce((a,o)=>a+o.charge,0))],['#0ea5e9','fa-money-bill-transfer','মোট ডিপোজিট',tk(ok.reduce((a,d)=>a+d.amount,0))],['#db2777','fa-fire','আজকের অর্ডার',td.length],['#0d9488','fa-wallet','ইউজারদের মোট ব্যালেন্স',tk(S.users.reduce((a,u)=>a+(u.balance||0),0))],['#ea580c','fa-ticket','ওপেন টিকেট',S.tix.filter(t=>t.status=='open').length]];
-  $('#v-dash').innerHTML=`<h2 class="t">ড্যাশবোর্ড<button class="btn s" id="lbB"><i class="fa-solid fa-trophy"></i> লিডারবোর্ড আপডেট</button></h2><div class="stats">${c.map(([bg,ic,l,v])=>`<div class="sc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('')}</div>
+  const t=S.st||{};
+  const c=[['#1e88e5','fa-users','মোট ইউজার',t.users||0],['#7c3aed','fa-cart-shopping','মোট অর্ডার',t.orders||0],['#f59e0b','fa-hourglass-half','পেন্ডিং অর্ডার',t.pending||0],['#16a34a','fa-sack-dollar','মোট বিক্রি',tk(t.sales)],['#0ea5e9','fa-money-bill-transfer','মোট ডিপোজিট',tk(t.deposits)],['#db2777','fa-fire','আজকের অর্ডার',t.today||0],['#0d9488','fa-wallet','ইউজারদের মোট ব্যালেন্স',tk(t.balances)],['#ea580c','fa-ticket','ওপেন টিকেট',t.tix||0]];
+  $('#v-dash').innerHTML=`<h2 class="t">ড্যাশবোর্ড<button class="btn s" id="clB"><i class="fa-solid fa-broom"></i> পুরোনো ডাটা মুছুন</button></h2><div class="stats">${c.map(([bg,ic,l,v])=>`<div class="sc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('')}</div>
   <div class="card"><h2 class="t" style="font-size:16px">সর্বশেষ অর্ডার</h2><div class="tw"><table><tr><th>ID</th><th>ইউজার</th><th>সার্ভিস</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th></tr>${[...S.orders].sort((a,b)=>ts(b)-ts(a)).slice(0,8).map(o=>`<tr><td>${o.orderNo}</td><td>${esc(o.userName)}</td><td>${esc(o.serviceName)}</td><td>${o.quantity}</td><td>${tk(o.charge)}</td><td><span class="st ${o.status}">${o.status}</span></td></tr>`).join('')||'<tr><td colspan=6 class="empty">কোনো অর্ডার নেই</td></tr>'}</table></div></div>`;
-  $('#lbB').onclick=async()=>{const now=new Date(),m0=new Date(now.getFullYear(),now.getMonth(),1),mp={};
-    S.orders.filter(o=>o.status!='canceled'&&o.createdAt?.toDate&&o.createdAt.toDate()>=m0).forEach(o=>{const x=mp[o.uid]=mp[o.uid]||{name:o.userName,spent:0,orders:0};x.spent+=o.charge;x.orders++});
-    const rows=Object.values(mp).sort((a,b)=>b.spent-a.spent).slice(0,10).map(x=>({name:x.name,spent:+x.spent.toFixed(2),orders:x.orders}));
-    try{await setDoc(doc(db,'settings','leaderboard'),{month:now.toLocaleString('en',{month:'long',year:'numeric'}),rows,updatedAt:serverTimestamp()});toast('লিডারবোর্ড আপডেট হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+  $('#clB').onclick=async()=>{try{const r=await srv('/adm/cleanup',{days:30,dry:true});if(r.error)throw new Error(r.error);
+    if(!confirm(`৩০ দিনের পুরোনো ${r.orders} টি শেষ হওয়া অর্ডার ও ${r.xp} টি XP লগ মোছা হবে (ইউজার ও ব্যালেন্স মুছবে না)। মুছবেন?`))return;
+    await srv('/adm/cleanup',{days:30});toast('মুছে ফেলা হয়েছে','ok');refresh()}catch(e){toast(e.message,'er')}};
 }
 
 /* REQUESTS */
@@ -203,8 +223,8 @@ function rReq(){
   ${l.map(q=>`<tr><td>${fd(q.createdAt)}</td><td>${esc(q.userName)}</td><td>${q.type=='refund'?'💸 Refund':'🔁 Refill'}</td><td>#${esc(q.orderNo)} ${esc(q.serviceName)}</td><td>${esc(q.note)}</td><td><span class="st ${q.status=='pending'?'pending':q.status=='rejected'?'rejected':'done'}">${q.status}</span></td>
   <td>${q.status=='pending'?`<button class="btn g s" data-ra="${q._id}">${q.type=='refund'?'Refund দিন':'Done'}</button> <button class="btn r s" data-rr="${q._id}">Reject</button>`:''}</td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো রিকোয়েস্ট নেই</td></tr>'}</table></div></div>`;
   $$('[data-ra]').forEach(b=>b.onclick=()=>{const q=S.reqs.find(x=>x._id==b.dataset.ra);
-    confirmDo(q.type=='refund'?'অর্ডার ক্যানসেল করে ইউজারকে টাকা ফেরত দেবেন?':'Refill করা হয়েছে হিসেবে চিহ্নিত করবেন?',async()=>{if(q.type=='refund')await setOrder(q.orderId,'canceled');await updateDoc(doc(db,'requests',q._id),{status:'done'})})});
-  $$('[data-rr]').forEach(b=>b.onclick=()=>confirmDo('Reject করবেন?',()=>updateDoc(doc(db,'requests',b.dataset.rr),{status:'rejected'})));
+    confirmDo(q.type=='refund'?'অর্ডার ক্যানসেল করে ইউজারকে টাকা ফেরত দেবেন?':'Refill করা হয়েছে হিসেবে চিহ্নিত করবেন?',async()=>{if(q.type=='refund')await setOrder(q.orderId,'canceled',true);await dbw('update','requests',q._id,{status:'done'})})});
+  $$('[data-rr]').forEach(b=>b.onclick=()=>confirmDo('Reject করবেন?',()=>dbw('update','requests',b.dataset.rr,{status:'rejected'})));
 }
 
 /* ORDERS */
@@ -216,19 +236,13 @@ function rOrd(){
   <div class="tw"><table><tr><th>ID</th><th>তারিখ</th><th>ইউজার</th><th>সার্ভিস</th><th>লিংক</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th><th>প্রোভাইডার / বট</th></tr>
   ${l.slice(0,200).map(o=>`<tr><td>${o.orderNo}</td><td>${fd(o.createdAt)}</td><td>${esc(o.userName)}</td><td>#${o.sid} ${esc(o.serviceName)}</td><td><a class="lnk" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.link)}</a></td><td>${o.quantity}</td><td>${tk(o.charge)}</td>
   <td><select data-o="${o._id}" style="margin:0;padding:6px">${sel(OST,o.status)}</select></td><td style="font-size:12px">${o.provOrder?'🟢 #'+esc(o.provOrder):o.provErr?'🔴 '+esc(o.provErr):esc(o.provState||'-')}${o.via=='api'?' • API':''}${o.botId?' • 🤖':''}</td></tr>`).join('')||'<tr><td colspan=9 class="empty">কিছু নেই</td></tr>'}</table></div></div>`;
-  $('#of').onchange=e=>{S.f.o=e.target.value;rOrd()};
-  const qi=$('#oq');qi.oninput=e=>{S.f.oq=e.target.value;rOrd();const n=$('#oq');n.focus();n.setSelectionRange(99,99)};
+  $('#of').onchange=e=>{S.f.o=e.target.value;rOrd();refresh()};
+  const qi=$('#oq');qi.oninput=e=>{S.f.oq=e.target.value;rOrd();const n=$('#oq');n.focus();n.setSelectionRange(99,99);clearTimeout(S._qt);S._qt=setTimeout(refresh,500)};
   $$('[data-o]').forEach(s=>s.onchange=()=>setOrder(s.dataset.o,s.value));
 }
-async function setOrder(id,st){
-  try{await runTransaction(db,async tx=>{
-    const r=doc(db,'orders',id),o=(await tx.get(r)).data();
-    if(!o)throw new Error('অর্ডার পাওয়া যায়নি');
-    const u=doc(db,'users',o.uid);
-    if(st=='canceled'&&!o.refunded){tx.update(u,{balance:increment(o.charge),totalSpent:increment(-o.charge)});const up={status:st,refunded:true};if(o.tenantCharged&&!o.tenantRefunded&&o.tenantOwnerUid){tx.update(doc(db,'users',o.tenantOwnerUid),{balance:increment(o.tenantCost||0)});up.tenantRefunded=true}tx.update(r,up);}
-    else if(st!='canceled'&&o.refunded){throw new Error('ক্যানসেল+রিফান্ড হওয়া অর্ডারের স্ট্যাটাস আর বদলানো যাবে না')}
-    else tx.update(r,{status:st});
-  });toast('স্ট্যাটাস আপডেট'+(st=='canceled'?' ও রিফান্ড':''),'ok')}catch(e){toast(e.message,'er');render()}
+async function setOrder(id,st,quiet){
+  try{const r=await srv('/adm/order-status',{id,status:st});if(r.error)throw new Error(r.error);
+    if(!quiet)toast('স্ট্যাটাস আপডেট'+(st=='canceled'?' ও রিফান্ড':''),'ok');refresh()}catch(e){toast(e.message,'er');refresh();if(quiet)throw e}
 }
 
 /* DEPOSITS */
@@ -238,36 +252,26 @@ function rDep(){
   <div class="tw"><table><tr><th>তারিখ</th><th>ইউজার</th><th>মেথড</th><th>পরিমাণ</th><th>পাঠানো নাম্বার</th><th>TrxID</th><th>স্ট্যাটাস</th><th></th></tr>
   ${l.map(d=>`<tr><td>${fd(d.createdAt)}</td><td>${esc(d.userName)}</td><td>${esc(d.method)}</td><td><b>${tk(d.amount)}</b></td><td>${esc(d.from)}</td><td><b>${esc(d.trx)}</b></td><td><span class="st ${d.status}">${d.status}</span></td>
   <td>${d.status=='pending'?`<button class="btn g s" data-a="${d._id}">Approve</button> <button class="btn r s" data-r="${d._id}">Reject</button>`:''}</td></tr>`).join('')||'<tr><td colspan=8 class="empty">কিছু নেই</td></tr>'}</table></div></div>`;
-  $('#df').onchange=e=>{S.f.d=e.target.value;rDep()};
+  $('#df').onchange=e=>{S.f.d=e.target.value;rDep();refresh()};
   $$('[data-a]').forEach(b=>b.onclick=()=>confirmDo('এই ডিপোজিট Approve করবেন? ইউজারের ব্যালেন্সে টাকা যোগ হবে।',()=>approve(b.dataset.a)));
-  $$('[data-r]').forEach(b=>b.onclick=()=>confirmDo('Reject করবেন?',()=>updateDoc(doc(db,'deposits',b.dataset.r),{status:'rejected'})));
+  $$('[data-r]').forEach(b=>b.onclick=()=>confirmDo('Reject করবেন?',()=>srv('/adm/deposit',{id:b.dataset.r,action:'reject'}).then(r=>{if(r.error)throw new Error(r.error);refresh()})));
 }
 async function approve(id){
-  const pct=+S.set.refPercent||0;
-  await runTransaction(db,async tx=>{
-    const r=doc(db,'deposits',id),d=(await tx.get(r)).data();
-    if(!d||d.status!='pending')throw new Error('ইতিমধ্যে প্রসেস করা হয়েছে');
-    const ur=doc(db,'users',d.uid),u=(await tx.get(ur)).data();
-    let refDoc=null,bonus=0;
-    if(u.referredBy&&pct>0){const m=S.users.find(x=>x.refCode==u.referredBy);if(m){refDoc=doc(db,'users',m._id);bonus=+(d.amount*pct/100).toFixed(2)}}
-    tx.update(ur,{balance:increment(d.amount),totalDeposit:increment(d.amount)});
-    if(refDoc)tx.update(refDoc,{balance:increment(bonus),refEarned:increment(bonus)});
-    tx.update(r,{status:'approved',bonus});
-  });
+  const r=await srv('/adm/deposit',{id,action:'approve'});if(r.error)throw new Error(r.error);refresh();
 }
 
 /* USERS */
 function rUsr(){
-  const q=S.f.uq.toLowerCase(),l=S.users.filter(u=>!q||(u.name||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)).sort((a,b)=>ts(b)-ts(a));
-  $('#v-users').innerHTML=`<h2 class="t">ইউজার ম্যানেজমেন্ট (${S.users.length})</h2><div class="card"><div class="bar"><input id="uq" placeholder="নাম / ইমেইল" value="${esc(S.f.uq)}"></div>
+  const l=[...S.users].sort((a,b)=>ts(b)-ts(a));
+  $('#v-users').innerHTML=`<h2 class="t">ইউজার ম্যানেজমেন্ট (${(S.st&&S.st.users)||S.users.length})</h2><div class="card"><div class="bar"><input id="uq" placeholder="নাম / ইমেইল / টেলিগ্রাম ইউজারনেম / আইডি" value="${esc(S.f.uq)}"></div>
   <div class="tw"><table><tr><th>নাম</th><th>ইমেইল</th><th>ব্যালেন্স</th><th>মোট খরচ</th><th>অর্ডার</th><th>স্ট্যাটাস</th><th></th></tr>
   ${l.slice(0,200).map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${tk(u.balance)}</td><td>${tk(u.totalSpent)}</td><td>${u.orderCount||0}</td><td>${u.banned?'<span class="st rejected">banned</span>':'<span class="st approved">active</span>'}</td>
   <td><button class="btn s" data-b="${u._id}">ব্যালেন্স</button> <button class="btn s ${u.banned?'g':'r'}" data-x="${u._id}">${u.banned?'Unban':'Ban'}</button></td></tr>`).join('')}</table></div></div>`;
-  const i=$('#uq');i.oninput=e=>{S.f.uq=e.target.value;rUsr();const n=$('#uq');n.focus();n.setSelectionRange(99,99)};
-  $$('[data-x]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.x);confirmDo((u.banned?'Unban':'Ban')+' করবেন?',()=>updateDoc(doc(db,'users',u._id),{banned:!u.banned}))});
+  const i=$('#uq');i.oninput=e=>{S.f.uq=e.target.value;clearTimeout(S._qt);S._qt=setTimeout(refresh,450)};
+  $$('[data-x]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.x);confirmDo((u.banned?'Unban':'Ban')+' করবেন?',()=>dbw('update','users',u._id,{banned:!u.banned}))});
   $$('[data-b]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.b);
     mopen(`<h2 class="t">${esc(u.name)} — ব্যালেন্স</h2><p>বর্তমান: <b>${tk(u.balance)}</b></p><label>পরিমাণ (যোগ করতে +, কাটতে −)</label><input id="ba" type="number" step="0.01" placeholder="যেমন 50 বা -20"><button class="btn full" id="bs">সেভ</button>`);
-    $('#bs').onclick=()=>{const a=+$('#ba').value;if(!a)return;confirmDo(`${tk(a)} ${a>0?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await updateDoc(doc(db,'users',u._id),{balance:increment(a),...(a>0?{totalDeposit:increment(a)}:{})});mclose()})};
+    $('#bs').onclick=()=>{const a=+$('#ba').value;if(!a)return;confirmDo(`${tk(a)} ${a>0?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await dbw('update','users',u._id,{balance:inc(a),...(a>0?{totalDeposit:inc(a)}:{})});mclose()})};
   });
 }
 
@@ -276,10 +280,10 @@ const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsa
 function rSvc(){
   const l=[...S.svcs].sort((a,b)=>a.sid-b.sid);
   $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button></h2><div class="card"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
-  ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${tk(s.rate)}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
+  ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">মূল ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
   $('#sn').onclick=()=>svcForm();
   $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));
-  $$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>deleteDoc(doc(db,'services',b.dataset.d))));
+  $$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>dbw('delete','services',b.dataset.d)));
 }
 function svcForm(s){
   const n=!s;s=s||{sid:(Math.max(1000,...S.svcs.map(x=>x.sid))+1),platform:'facebook',category:'',name:'',rate:0,min:100,max:10000,avgTime:'',desc:'',enabled:true};
@@ -291,19 +295,28 @@ function svcForm(s){
   <label><input type="checkbox" id="f10" ${s.enabled?'checked':''} style="width:auto;margin-right:6px">চালু আছে</label><button class="btn full" id="fs">সেভ</button>`);
   $('#fs').onclick=async()=>{const d={sid:+$('#f1').value,platform:$('#f2').value,category:$('#f3').value.trim(),name:$('#f4').value.trim(),rate:+$('#f5').value,min:+$('#f6').value,max:+$('#f7').value,avgTime:$('#f8').value.trim(),desc:$('#f9').value.trim(),enabled:$('#f10').checked};
     if(!d.category||!d.name||!d.rate||!d.min||!d.max||d.min>d.max)return toast('সব তথ্য সঠিকভাবে দিন','er');
-    try{n?await addDoc(collection(db,'services'),d):await updateDoc(doc(db,'services',s._id),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+    try{n?await dbw('add','services',null,d):await dbw('update','services',s._id,d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 
-/* বট সার্ভারের সাথে যোগাযোগ (প্রোভাইডার ও রিসেলার বট) */
-async function srv(path,body){
-  let base='';try{base=((await getDoc(doc(db,'public','config'))).data()?.botServer||'').replace(/\/$/,'')}catch{}
-  if(!base)throw new Error('বট সার্ভারের ঠিকানা পাওয়া যায়নি (Render এ API_BASE_URL দিন)');
-  const tok=await auth.currentUser.getIdToken();
-  const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body||{})});
+/* বট সার্ভারের সাথে যোগাযোগ — সব ডাটা এখান থেকেই আসে/যায় */
+const BOT_SERVER='';
+async function botServer(){
+  if(BOT_SERVER)return BOT_SERVER.replace(/\/$/,'');
+  let c=lsGet('leafBS');
+  if(!c){try{const r=await fetch('https://firestore.googleapis.com/v1/projects/'+firebaseConfig.projectId+'/databases/(default)/documents/public/config?key='+firebaseConfig.apiKey),j=await r.json();c=j.fields?.botServer?.stringValue||'';if(c)lsSet('leafBS',c)}catch{}}
+  return c.replace(/\/$/,'');
+}
+async function srv(path,body,anon){
+  const base=await botServer();
+  if(!base)throw new Error('বট সার্ভারের ঠিকানা পাওয়া যায়নি');
+  const h={'Content-Type':'application/json'};
+  if(!anon){const tok=await auth.currentUser.getIdToken();h.Authorization='Bearer '+tok}
+  const r=await fetch(base+path,{method:anon?'GET':'POST',headers:h,body:anon?undefined:JSON.stringify(body||{})});
   const j=await r.json().catch(()=>({error:'সার্ভারের উত্তর বোঝা যায়নি'}));
   if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;
   return j;
 }
+async function dbw(op,c,id,data,merge){const r=await srv('/adm/doc',{op,c,id,data,merge});if(r.error)throw new Error(r.error);refresh();return r}
 
 /* PROVIDERS */
 function rProv(){
@@ -314,7 +327,7 @@ function rProv(){
   <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
   $('#pn').onclick=()=>provForm();
   $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
-  $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>deleteDoc(doc(db,'providers',b.dataset.pd))));
+  $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>dbw('delete','providers',b.dataset.pd)));
   $$('[data-pb]').forEach(b=>b.onclick=async()=>{toast('চেক করা হচ্ছে...');try{const r=await srv('/admin/provider/balance',{id:b.dataset.pb});r.error?toast(r.error,'er'):toast('প্রোভাইডার ব্যালেন্স: '+r.balance+' '+(r.currency||''),'ok')}catch(e){toast(e.message,'er')}});
   $$('[data-pi]').forEach(b=>b.onclick=async()=>{if(!confirm('সার্ভিস ইমপোর্ট করবেন? আগের ইমপোর্ট করা সার্ভিসের রেট নতুন করে বসবে।'))return;toast('ইমপোর্ট হচ্ছে, একটু অপেক্ষা করুন...');try{const r=await srv('/admin/provider/import',{id:b.dataset.pi});r.error?toast(r.error,'er'):toast('নতুন '+r.added+' টি, আপডেট '+r.updated+' টি','ok')}catch(e){toast(e.message,'er')}});
 }
@@ -326,7 +339,7 @@ function provForm(p){
   <button class="btn full" id="ps">সেভ</button>`);
   $('#ps').onclick=async()=>{const d={name:$('#p1').value.trim(),url:$('#p2').value.trim(),key:$('#p3').value.trim(),markup:+$('#p4').value||0,fx:+$('#p5').value||1};
     if(!d.name||!/^https?:\/\//i.test(d.url)||!d.key)return toast('নাম, সঠিক URL ও কী দিন','er');
-    try{n?await addDoc(collection(db,'providers'),d):await updateDoc(doc(db,'providers',p._id),d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+    try{n?await dbw('add','providers',null,d):await dbw('update','providers',p._id,d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 
 /* RESELLER BOTS */
@@ -345,7 +358,7 @@ function drawRb(){
   const upd=async(id,body)=>{try{const r=await srv('/admin/rbots/update',{id,...body});if(r.error)throw new Error(r.error);toast('সেভ হয়েছে','ok');mclose();S.rbStale=true;rRb()}catch(e){toast(e.message,'er')}};
   const bc=async(id,text)=>{if(!text.trim())return toast('মেসেজ লিখুন','er');try{const r=await srv('/admin/rbots/broadcast',{id,text});if(r.error)throw new Error(r.error);toast('ব্রডকাস্ট শুরু হয়েছে (ব্যাকগ্রাউন্ডে যাচ্ছে)','ok');mclose()}catch(e){toast(e.message,'er')}};
   $('#rbR').onclick=()=>{S.rbStale=true;rRb()};
-  $('#rbCs').onclick=async()=>{try{await setDoc(doc(db,'settings','main'),{resellerBotCharge:+$('#rbC').value||0},{merge:true});toast('চার্জ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+  $('#rbCs').onclick=async()=>{try{await dbw('set','settings','main',{resellerBotCharge:+$('#rbC').value||0},true);toast('চার্জ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
   $('#rbB').onclick=()=>{mopen(`<h2 class="t">📢 সব রিসেলার বটে ব্রডকাস্ট</h2><label>মেসেজ</label><textarea id="bm" rows="4"></textarea><button class="btn full" id="bs2">পাঠান</button>`);$('#bs2').onclick=()=>bc('all',$('#bm').value)};
   $$('[data-rt]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rt);confirmDo((b.active?'বন্ধ':'চালু')+' করবেন?',()=>upd(b.id,{active:!b.active}))});
   $$('[data-rc]').forEach(x=>x.onclick=()=>{const b=l.find(y=>y.id==x.dataset.rc);mopen(`<h2 class="t">@${esc(b.username)} — অর্ডার চ্যানেল</h2><label>@নাম বা -100… আইডি</label><input id="oc" value="${esc(b.orderChannel||'')}"><button class="btn full" id="ocs">সেভ</button>`);$('#ocs').onclick=()=>upd(b.id,{orderChannel:$('#oc').value.trim()})});
@@ -359,8 +372,8 @@ function rTix(){
   $('#v-tix').innerHTML=`<h2 class="t">সাপোর্ট টিকেট</h2><div class="bar"><select id="tf">${['open','closed','all'].map(s=>`<option ${S.f.t==s?'selected':''}>${s}</option>`).join('')}</select></div>
   ${l.map(t=>`<div class="card"><div style="display:flex;justify-content:space-between"><b>${esc(t.subject)} <small style="color:var(--mu)">— ${esc(t.userName)} • ${fd(t.createdAt)}</small></b><span class="st ${t.status}">${t.status}</span></div><p style="margin:10px 0">${esc(t.message)}</p>
   <textarea rows="2" id="r-${t._id}" placeholder="উত্তর লিখুন...">${esc(t.reply||'')}</textarea><div style="margin-top:10px;display:flex;gap:8px"><button class="btn s" data-rp="${t._id}">উত্তর দিয়ে বন্ধ করুন</button></div></div>`).join('')||'<div class="empty">কোনো টিকেট নেই</div>'}`;
-  $('#tf').onchange=e=>{S.f.t=e.target.value;rTix()};
-  $$('[data-rp]').forEach(b=>b.onclick=()=>{const r=$('#r-'+b.dataset.rp).value.trim();if(!r)return toast('উত্তর লিখুন','er');updateDoc(doc(db,'tickets',b.dataset.rp),{reply:r,status:'closed'}).then(()=>toast('পাঠানো হয়েছে','ok'))});
+  $('#tf').onchange=e=>{S.f.t=e.target.value;rTix();refresh()};
+  $$('[data-rp]').forEach(b=>b.onclick=()=>{const r=$('#r-'+b.dataset.rp).value.trim();if(!r)return toast('উত্তর লিখুন','er');dbw('update','tickets',b.dataset.rp,{reply:r,status:'closed'}).then(()=>toast('পাঠানো হয়েছে','ok')).catch(e=>toast(e.message,'er'))});
 }
 
 /* SETTINGS */
@@ -385,14 +398,22 @@ function rSet(){
   <label>ভিআইপি লেভেল (প্রতি লাইনে: নাম,ন্যূনতম খরচ,ডিসকাউন্ট%)</label><textarea id="s7" rows="5">${(s.levels||[{name:'Starter',min:0,disc:0},{name:'Bronze',min:500,disc:2},{name:'Silver',min:2000,disc:4},{name:'Gold',min:5000,disc:6},{name:'Diamond',min:15000,disc:10}]).map(l=>[l.name,l.min,l.disc].join(',')).join('\n')}</textarea>
   <label>পেমেন্ট মেথড</label><div id="pmL">${m.map((x,i)=>pmRow(x)).join('')}</div>
   <button class="btn gr s" id="pmA" style="margin-top:10px"><i class="fa-solid fa-plus"></i> মেথড যোগ</button><br><button class="btn full" id="ss">সেভ করুন</button></div>
+  <div class="card"><h2 class="t" style="font-size:17px">💲 রেট সেট করার নিয়ম (মূল বট)</h2>
+  <p style="color:var(--mu);font-size:13px;line-height:1.7;margin-bottom:8px">প্রতি লাইনে একটি নিয়ম, রেট প্রতি ১০০০ এর জন্য। যেমন <b>0-3 = 12</b> লিখলে যেসব সার্ভিসের মূল রেট ০ থেকে ৩ টাকার মধ্যে সবগুলোর রেট ১২ টাকা হবে। <b>50+ = 100</b> মানে ৫০ বা তার বেশি হলে ১০০। কোনো নিয়মে না পড়লে রেট আগের মতোই থাকে। একাধিক নিয়ম মিললে ওপরেরটা চলে। লেখা খালি রেখে প্রয়োগ করলে সব রেট মূলে ফিরে যাবে।</p>
+  <textarea id="rr" rows="6" placeholder="0-3 = 12&#10;3.01-10 = 25&#10;50+ = 100">${esc(s.rateRules||'')}</textarea>
+  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn gr s" id="rrD"><i class="fa-regular fa-eye"></i> কতটা বদলাবে দেখুন</button><button class="btn s" id="rrA"><i class="fa-solid fa-check"></i> প্রয়োগ করুন</button></div></div>
   <div class="card"><h2 class="t" style="font-size:17px">🔑 অ্যাডমিন পাসওয়ার্ড পরিবর্তন</h2><div class="fg"><div><label>বর্তমান পাসওয়ার্ড</label><input id="cp0" type="password"></div><div><label>নতুন পাসওয়ার্ড</label><input id="cp1" type="password"></div><div><label>নতুন পাসওয়ার্ড আবার</label><input id="cp2" type="password"></div></div><button class="btn" id="cpB" style="margin-top:14px">পাসওয়ার্ড বদলান</button></div>`;
   $('#cpB').onclick=async()=>{const a=$('#cp0').value,b=$('#cp1').value;if(b.length<6)return toast('নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর','er');if(b!==$('#cp2').value)return toast('নতুন পাসওয়ার্ড দুইবার মেলেনি','er');
     try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,a));await updatePassword(u,b);$('#cp0').value=$('#cp1').value=$('#cp2').value='';toast('পাসওয়ার্ড বদলানো হয়েছে','ok')}catch{toast('বর্তমান পাসওয়ার্ড ভুল','er')}};
+  const rr=async dry=>{try{const r=await srv('/adm/rates',{rules:$('#rr').value,dry});if(r.error)throw new Error(r.error);
+    if(dry)toast(`মোট ${r.total} টি সার্ভিসের মধ্যে ${r.changed} টির রেট বদলাবে`,'ok');else{toast(`✅ ${r.changed} টি সার্ভিসের রেট বদলেছে`,'ok');refresh()}}catch(e){toast(e.message,'er')}};
+  $('#rrD').onclick=()=>rr(true);
+  $('#rrA').onclick=()=>{if(confirm('সব সার্ভিসে এই নিয়ম প্রয়োগ হবে। নিশ্চিত?'))rr(false)};
   $('#pmA').onclick=()=>$('#pmL').insertAdjacentHTML('beforeend',pmRow({}));
   $('#pmL').onclick=e=>{const b=e.target.closest('[data-rm]');if(b)b.parentElement.remove()};
   $('#ss').onclick=async()=>{
     const methods=$$('#pmL .pmr').map(r=>({name:r.children[0].value.trim(),number:r.children[1].value.trim(),note:r.children[2].value.trim()})).filter(x=>x.name&&x.number);
-    try{await setDoc(doc(db,'settings','main'),{adminIds:$('#b1').value.split(/[\s,]+/).filter(x=>/^\d+$/.test(x)),forceChannels:$('#b2').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b3').value.trim(),orderBtnLink:$('#b4').value.trim(),resellerBotCharge:+$('#b5').value||0,siteName:$('#s1').value.trim(),supportLink:$('#s2').value.trim(),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},{merge:true});toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+    try{await dbw('set','settings','main',{adminIds:$('#b1').value.split(/[\s,]+/).filter(x=>/^\d+$/.test(x)),forceChannels:$('#b2').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b3').value.trim(),orderBtnLink:$('#b4').value.trim(),resellerBotCharge:+$('#b5').value||0,siteName:$('#s1').value.trim(),supportLink:$('#s2').value.trim(),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},true);S._setDirty=false;toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
