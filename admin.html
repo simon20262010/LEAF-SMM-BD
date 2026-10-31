@@ -69,6 +69,7 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
     <a data-v="rb"><i class="fa-solid fa-robot"></i>রিসেলার বট</a>
     <a data-v="reqs"><i class="fa-solid fa-life-ring"></i>রিকোয়েস্ট<b id="cR" class="hide"></b></a>
     <a data-v="tix"><i class="fa-solid fa-ticket"></i>টিকেট<b id="cT" class="hide"></b></a>
+    <a data-v="tools"><i class="fa-solid fa-toolbox"></i>টুলস ও লগ</a>
     <a data-v="set"><i class="fa-solid fa-gear"></i>সেটিংস</a>
     <a id="out" style="margin-top:20px"><i class="fa-solid fa-right-from-bracket"></i>লগআউট</a>
   </aside>
@@ -82,6 +83,7 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
     <section id="v-rb" class="hide"></section>
     <section id="v-reqs" class="hide"></section>
     <section id="v-tix" class="hide"></section>
+    <section id="v-tools" class="hide"></section>
     <section id="v-set" class="hide"></section>
   </main>
 </div>
@@ -160,7 +162,7 @@ async function enter(u){
   $('#login').classList.add('hide');$('#panel').classList.remove('hide');
   refresh();clearInterval(S._pt);S._pt=setInterval(()=>{if(!document.hidden)refresh()},10000);
 }
-const NEED={dash:['orders'],orders:['orders'],deps:['deposits'],users:['users'],svcs:['services'],prov:['providers'],reqs:['requests'],tix:['tickets'],rb:[],set:[]};
+const NEED={dash:['orders'],orders:['orders'],deps:['deposits'],users:['users'],svcs:['services'],prov:['providers'],reqs:['requests'],tix:['tickets'],rb:[],tools:[],set:[]};
 const KEY={orders:'orders',deposits:'deps',users:'users',services:'svcs',tickets:'tix',requests:'reqs',providers:'prov'};
 async function load(c){
   const b={c};
@@ -205,14 +207,14 @@ onAuthStateChanged(auth,async u=>{
 
 /* NAV */
 let cur='dash';
-$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;S._setDirty=false;render();refresh()});
+$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;if(cur=='tools')S._tl=false;S._setDirty=false;render();refresh()});
 $('#mm').onclick=()=>$('#side').classList.toggle('open');
 function badge(id,n){const e=$(id);e.textContent=n;e.classList.toggle('hide',!n)}
 function badges(){const t=S.st||{};badge('#cO',t.pending||0);badge('#cD',t.pdeps||0);badge('#cR',t.reqs||0);badge('#cT',t.tix||0)}
 function render(){
   $('#brand').textContent=S.set.siteName||'Admin';
   badges();
-  ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,set:rSet})[cur]();
+  ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,tools:rTools,set:rSet})[cur]();
 }
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
 $('#mo').onclick=e=>{if(e.target.id=='mo')mclose()};
@@ -296,11 +298,49 @@ function rUsr(){
   ${l.slice(0,200).map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${tk(u.balance)}</td><td>${tk(u.totalSpent)}</td><td>${u.orderCount||0}</td><td>${u.banned?'<span class="st rejected">banned</span>':'<span class="st approved">active</span>'}</td>
   <td><button class="btn s" data-b="${u._id}">ব্যালেন্স</button> <button class="btn s ${u.banned?'g':'r'}" data-x="${u._id}">${u.banned?'Unban':'Ban'}</button></td></tr>`).join('')}</table></div></div>`;
   const i=$('#uq');i.oninput=e=>{S.f.uq=e.target.value;clearTimeout(S._qt);S._qt=setTimeout(refresh,450)};
-  $$('[data-x]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.x);confirmDo((u.banned?'Unban':'Ban')+' করবেন?',()=>dbw('update','users',u._id,{banned:!u.banned}))});
+  const act=async(body)=>{const r=await srv('/adm/user-act',body);if(r.error)throw new Error(r.error);refresh();return r};
+  $$('[data-x]').forEach(b=>b.onclick=async()=>{const u=S.users.find(x=>x._id==b.dataset.x);
+    if(u.banned){return confirmDo('Unban করবেন?',()=>act({id:u._id,action:'unban'}))}
+    const why=prompt('ব্যান করার কারণ লিখুন (ইউজারকে জানানো হবে):','');if(why===null)return;
+    try{await act({id:u._id,action:'ban',reason:why});toast('ব্যান হয়েছে','ok')}catch(e){toast(e.message,'er')}});
   $$('[data-b]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.b);
-    mopen(`<h2 class="t">${esc(u.name)} — ব্যালেন্স</h2><p>বর্তমান: <b>${tk(u.balance)}</b></p><label>পরিমাণ (যোগ করতে +, কাটতে −)</label><input id="ba" type="number" step="0.01" placeholder="যেমন 50 বা -20"><button class="btn full" id="bs">সেভ</button>`);
-    $('#bs').onclick=()=>{const a=+$('#ba').value;if(!a)return;confirmDo(`${tk(a)} ${a>0?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await dbw('update','users',u._id,{balance:inc(a),...(a>0?{totalDeposit:inc(a)}:{})});mclose()})};
+    mopen(`<h2 class="t">${esc(u.name)} — ব্যালেন্স</h2><p>বর্তমান: <b>${tk(u.balance)}</b></p><label>কাজ</label><select id="bk"><option value="add">➕ যোগ করুন</option><option value="sub">➖ কাটুন</option></select><label>পরিমাণ (৳)</label><input id="ba" type="number" step="0.01" min="0" placeholder="যেমন 50"><label>কারণ (ইউজারকে জানানো হবে ও লগে থাকবে)</label><input id="br" maxlength="150" placeholder="যেমন: বোনাস / ভুল ডিপোজিট সংশোধন"><button class="btn full" id="bs">সেভ</button>`);
+    $('#bs').onclick=()=>{const a=+$('#ba').value,k=$('#bk').value;if(!(a>0))return toast('সঠিক পরিমাণ দিন','er');confirmDo(`${tk(a)} ${k=='add'?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await act({id:u._id,action:k,amount:a,reason:$('#br').value.trim()});mclose()})};
   });
+}
+
+/* TOOLS */
+function rTools(){
+  if(S._tl)return;S._tl=true;const s=S.set,LV=(s.levels&&s.levels.length?s.levels:[{name:'Starter'},{name:'Bronze'},{name:'Silver'},{name:'Gold'},{name:'Diamond'}]);
+  $('#v-tools').innerHTML=`<h2 class="t">টুলস ও লগ</h2>
+  <div class="card"><h2 class="t" style="font-size:16px">🛡 অর্ডার সুরক্ষা ও অ্যালার্ট</h2>
+  <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="tDup" style="width:auto" ${s.dupBlock===false?'':'checked'}> একই লিংকে একই সার্ভিসের চলমান অর্ডার থাকলে নতুন অর্ডার আটকান</label>
+  <label>দৈনিক সর্বোচ্চ অর্ডার (প্রতি ইউজার, ০ = সীমা নেই)</label><input id="tMax" type="number" min="0" value="${s.maxDailyOrders||0}">
+  <label>প্রোভাইডারের ব্যালেন্স এর নিচে নামলে টেলিগ্রামে অ্যালার্ট</label><input id="tPm" type="number" min="0" step="0.01" value="${s.provMin??5}">
+  <label>মাসের সেরা রেফারারের পুরস্কার (মিনি অ্যাপে দেখাবে, খালি = লুকানো)</label><input id="tRp" maxlength="200" value="${esc(s.refPrize||'')}" placeholder="যেমন: ১ম জন পাবেন ৳500">
+  <button class="btn" id="tSave" style="margin-top:12px">সেভ</button></div>
+  <div class="card"><h2 class="t" style="font-size:16px">📢 ব্রডকাস্ট (মূল বটের সব ইউজার)</h2>
+  <textarea id="bT" rows="4" maxlength="3500" placeholder="মেসেজ লিখুন"></textarea>
+  <label>কারা পাবে</label><select id="bL"><option value="0">সবাই</option>${LV.slice(1).map((l,i)=>`<option value="${i+1}">${esc(l.name)} ও তার ওপরের লেভেল</option>`).join('')}</select>
+  <button class="btn" id="bGo" style="margin-top:12px"><i class="fa-solid fa-paper-plane"></i> পাঠান</button><div id="bSt" style="font-size:13px;margin-top:10px;color:var(--mu)"></div></div>
+  <div class="card"><h2 class="t" style="font-size:16px">🎟 প্রমো / গিফট কোড</h2>
+  <div class="bar"><input id="pC" placeholder="কোড (A-Z, 0-9)" style="text-transform:uppercase"><input id="pA" type="number" min="1" placeholder="টাকা"><input id="pM" type="number" min="0" placeholder="কতজন (০=সীমাহীন)"><input id="pD" type="number" min="0" placeholder="কত দিন চলবে (০=সীমাহীন)"><button class="btn" id="pAdd">তৈরি</button></div>
+  <div class="tw"><table><tr><th>কোড</th><th>টাকা</th><th>ব্যবহার</th><th>মেয়াদ</th><th></th></tr><tbody id="pL"><tr><td colspan=5 class="empty">লোড হচ্ছে...</td></tr></tbody></table></div></div>
+  <div class="card"><h2 class="t" style="font-size:16px">💾 ব্যাকআপ</h2>
+  <div style="font-size:13px;color:var(--mu);line-height:1.7">ইউজার, ব্যালেন্স, রিসেলার বট, সেটিংস, প্রমো কোড একটা ফাইলে আপনার টেলিগ্রামে আসবে। প্রতি ৭ দিনে নিজে থেকে আসে, আর পুরোনো ডাটা মোছার আগেও আসে।</div>
+  <div id="kSt" style="font-size:13px;margin:8px 0"></div><button class="btn" id="kGo"><i class="fa-solid fa-cloud-arrow-down"></i> এখনই ব্যাকআপ পাঠান</button></div>
+  <div class="card"><h2 class="t" style="font-size:16px">📜 অ্যাডমিন অ্যাকশন লগ <span style="font-size:12px;color:var(--mu)">(৩০ দিন)</span></h2><div class="tw"><table><tr><th>সময়</th><th>কে</th><th>কাজ</th><th>কার</th><th>বিবরণ</th></tr><tbody id="lgL"><tr><td colspan=5 class="empty">লোড হচ্ছে...</td></tr></tbody></table></div></div>`;
+  const ck=async(p,b)=>{const r=await srv(p,b);if(r.error)throw new Error(r.error);return r};
+  $('#tSave').onclick=()=>{const v={dupBlock:$('#tDup').checked,maxDailyOrders:+$('#tMax').value||0,provMin:+$('#tPm').value||0,refPrize:$('#tRp').value.trim()};return dbw('set','settings','main',v,true).then(()=>{Object.assign(S.set,v);toast('সেভ হয়েছে','ok')}).catch(e=>toast(e.message,'er'))};
+  const bst=async()=>{try{const r=fx((await ck('/adm/broadcast',{status:1})).b);if(!r||!r.total){$('#bSt').textContent='';return}$('#bSt').innerHTML=`${r.run?'⏳ চলছে':'✅ শেষ'} — পাঠানো <b>${r.sent||0}</b> / ${r.total}${r.fail?` • ব্যর্থ ${r.fail}`:''}`;if(r.run&&cur=='tools')setTimeout(bst,3000)}catch{}};
+  $('#bGo').onclick=()=>{const t=$('#bT').value.trim();if(!t)return toast('মেসেজ লিখুন','er');confirmDo('সবাইকে মেসেজ পাঠানো শুরু হবে। নিশ্চিত?',async()=>{await ck('/adm/broadcast',{text:t,minLevel:+$('#bL').value});$('#bT').value='';setTimeout(bst,1500)})};bst();
+  const pl=async()=>{try{const r=fx(await ck('/adm/promo',{op:'list'}));$('#pL').innerHTML=(r.items||[]).map(p=>`<tr><td><b>${esc(p._id)}</b></td><td>${tk(p.amount)}</td><td>${p.used||0}${p.maxUses?' / '+p.maxUses:''}</td><td>${p.expiresAt?fd(p.expiresAt):'—'}</td><td style="white-space:nowrap"><button class="btn s ${p.active===false?'g':'gr'}" data-pt="${esc(p._id)}">${p.active===false?'চালু':'বন্ধ'}</button> <button class="btn r s" data-pd="${esc(p._id)}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=5 class="empty">কোনো কোড নেই</td></tr>';
+    $$('[data-pt]').forEach(b=>b.onclick=async()=>{try{await ck('/adm/promo',{op:'toggle',code:b.dataset.pt});pl()}catch(e){toast(e.message,'er')}});
+    $$('#pL [data-pd]').forEach(b=>b.onclick=()=>confirmDo('কোডটি মুছবেন?',async()=>{await ck('/adm/promo',{op:'delete',code:b.dataset.pd});pl()}))}catch(e){toast(e.message,'er')}};
+  $('#pAdd').onclick=async()=>{try{await ck('/adm/promo',{op:'add',code:$('#pC').value.trim(),amount:+$('#pA').value,maxUses:+$('#pM').value||0,days:+$('#pD').value||0});toast('কোড তৈরি হয়েছে','ok');['#pC','#pA','#pM','#pD'].forEach(x=>$(x).value='');pl()}catch(e){toast(e.message,'er')}};pl();
+  const kst=async()=>{try{const r=fx((await ck('/adm/backup',{status:1})).b);$('#kSt').innerHTML=r&&r.lastAt?`সর্বশেষ ব্যাকআপ: <b>${fd(r.lastAt)}</b> • ইউজার ${r.users||0} • ${Math.round((r.size||0)/1024)} KB`:'এখনো কোনো ব্যাকআপ হয়নি'}catch{}};
+  $('#kGo').onclick=async()=>{try{await ck('/adm/backup',{});toast('ব্যাকআপ পাঠানো হচ্ছে, টেলিগ্রাম দেখুন','ok');setTimeout(kst,6000)}catch(e){toast(e.message,'er')}};kst();
+  (async()=>{try{const r=fx(await ck('/adm/logs',{}));$('#lgL').innerHTML=(r.items||[]).map(l=>`<tr><td style="white-space:nowrap">${fd(l.createdAt)}</td><td>${esc(l.admin)}</td><td>${esc(l.action)}</td><td>${esc(l.target)}</td><td>${esc(l.detail)}</td></tr>`).join('')||'<tr><td colspan=5 class="empty">কিছু নেই</td></tr>'}catch(e){toast(e.message,'er')}})();
 }
 
 /* SERVICES */
@@ -446,4 +486,4 @@ function rSet(){
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
 </body>
-  </html>
+</html>
