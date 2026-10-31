@@ -177,6 +177,7 @@ async function refresh(){
     const [st,sm]=await Promise.all([srv('/adm/stats',{}),cur=='set'||cur=='rb'||!S.set.siteName?srv('/adm/me',{}):null]);
     if(st&&!st.error)S.st=st;
     if(sm&&!sm.error&&!(cur=='set'&&S._setDirty))S.set=fx(sm.settings||{});
+    if(cur=='dash'&&Date.now()-(S._usT||0)>45000){S._usT=Date.now();srv('/adm/usage',{}).then(u=>{if(u&&!u.error){S.us=u;if(cur=='dash')render()}}).catch(()=>{})}
     await Promise.all([...(NEED[cur]||[]),...(cur!='svcs'&&!S.svcs.length?['services']:[]),...(cur=='prov'||cur=='svcs'?['providers']:[])].filter((v,i,a)=>a.indexOf(v)==i).map(load));
   }catch(e){console.warn(e)}
   if(id==_rf&&!(cur=='set'&&document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)))render();
@@ -206,14 +207,28 @@ const sel=(opts,v)=>opts.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).j
 const confirmDo=async(msg,fn)=>{if(!confirm(msg))return;try{await fn();toast('সম্পন্ন','ok')}catch(e){toast(e.message,'er')}};
 
 /* DASHBOARD */
+function usageCard(){
+  const u=S.us;if(!u)return `<div class="card"><h2 class="t" style="font-size:16px">💾 ডাটাবেস স্টোরেজ</h2><div class="empty" style="padding:14px">হিসাব হচ্ছে...</div></div>`;
+  const col=u.pct>=80?'#dc2626':u.pct>=60?'#f59e0b':'#16a34a';
+  const left=u.daysLeft==null?'নতুন ডাটা খুব কম বাড়ছে':`${u.daysLeft} দিন (প্রায় ${new Date(Date.now()+u.daysLeft*864e5).toLocaleDateString('bn-BD',{day:'numeric',month:'long',year:'numeric'})})`;
+  return `<div class="card"><h2 class="t" style="font-size:16px">💾 ডাটাবেস স্টোরেজ<span style="font-size:13px;color:${col}">${u.pct}% ব্যবহার</span></h2>
+  <div style="height:14px;background:#e5edf7;border-radius:8px;overflow:hidden"><i style="display:block;height:100%;width:${Math.min(100,u.pct)}%;background:${col};border-radius:8px;transition:width 1s"></i></div>
+  <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px"><b>${u.usedMb} MB ব্যবহার</b><span style="color:var(--mu)">খালি ${u.freeMb} / ${u.limitMb} MB</span></div>
+  <div style="font-size:13px;line-height:1.9;margin-top:10px">📈 প্রতিদিন গড়ে নতুন ডাটা: <b>~${u.perDayMb} MB</b><br>⏳ কিছু না মুছলে এভাবে চললে ভরতে লাগবে: <b style="color:${col}">${left}</b><br>🧹 ৩০ দিনের পুরোনো ডাটা মুছতে থাকলে ডাটাবেস সর্বোচ্চ প্রায় <b>${u.steadyMb} MB</b>-এ থামবে ${u.steadyMb<u.limitMb*0.9?'✅ সীমার মধ্যে':'⚠️ সীমার কাছাকাছি'}</div>
+  <div style="font-size:12px;color:var(--mu);margin-top:8px;line-height:1.6">ডাটা ${u.dataMb} MB + ইন্ডেক্স ${u.indexMb} MB (ডিস্কে ${u.diskMb} MB)। ${u.exact?'সংখ্যাগুলো ডাটাবেস থেকে সরাসরি মাপা':'প্রতিদিনের বৃদ্ধির হিসাব নমুনা থেকে'}। ইউজার, ব্যালেন্স, মোট ডিপোজিট/খরচ/অর্ডার সংখ্যা মোছার পরেও ঠিক থাকে। শুধু পুরোনো অর্ডার-তালিকা সরে যায়।</div>
+  <button class="btn s" id="clB2" style="margin-top:10px"><i class="fa-solid fa-broom"></i> পুরোনো ডাটা মুছুন</button></div>`;
+}
 function rDash(){
   const t=S.st||{};
   const c=[['#1e88e5','fa-users','মোট ইউজার',t.users||0],['#7c3aed','fa-cart-shopping','মোট অর্ডার',t.orders||0],['#f59e0b','fa-hourglass-half','পেন্ডিং অর্ডার',t.pending||0],['#16a34a','fa-sack-dollar','মোট বিক্রি',tk(t.sales)],['#0ea5e9','fa-money-bill-transfer','মোট ডিপোজিট',tk(t.deposits)],['#db2777','fa-fire','আজকের অর্ডার',t.today||0],['#0d9488','fa-wallet','ইউজারদের মোট ব্যালেন্স',tk(t.balances)],['#ea580c','fa-ticket','ওপেন টিকেট',t.tix||0]];
   $('#v-dash').innerHTML=`<h2 class="t">ড্যাশবোর্ড<button class="btn s" id="clB"><i class="fa-solid fa-broom"></i> পুরোনো ডাটা মুছুন</button></h2><div class="stats">${c.map(([bg,ic,l,v])=>`<div class="sc" style="background:${bg}"><small><i class="fa-solid ${ic}"></i> ${l}</small><b>${v}</b></div>`).join('')}</div>
+  ${usageCard()}
   <div class="card"><h2 class="t" style="font-size:16px">সর্বশেষ অর্ডার</h2><div class="tw"><table><tr><th>ID</th><th>ইউজার</th><th>সার্ভিস</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th></tr>${[...S.orders].sort((a,b)=>ts(b)-ts(a)).slice(0,8).map(o=>`<tr><td>${o.orderNo}</td><td>${esc(o.userName)}</td><td>${esc(o.serviceName)}</td><td>${o.quantity}</td><td>${tk(o.charge)}</td><td><span class="st ${o.status}">${o.status}</span></td></tr>`).join('')||'<tr><td colspan=6 class="empty">কোনো অর্ডার নেই</td></tr>'}</table></div></div>`;
-  $('#clB').onclick=async()=>{try{const r=await srv('/adm/cleanup',{days:30,dry:true});if(r.error)throw new Error(r.error);
-    if(!confirm(`৩০ দিনের পুরোনো ${r.orders} টি শেষ হওয়া অর্ডার ও ${r.xp} টি XP লগ মোছা হবে (ইউজার ও ব্যালেন্স মুছবে না)। মুছবেন?`))return;
-    await srv('/adm/cleanup',{days:30});toast('মুছে ফেলা হয়েছে','ok');refresh()}catch(e){toast(e.message,'er')}};
+  const cl=async()=>{try{const ds=prompt('কত দিনের পুরোনো ডাটা মুছবেন? (কমপক্ষে ৭, সাধারণত ৩০)','30');if(!ds)return;const d=Math.max(7,parseInt(ds)||30);
+    const r=await srv('/adm/cleanup',{days:d,dry:true});if(r.error)throw new Error(r.error);
+    if(!confirm(`${d} দিনের পুরোনো ${r.orders} টি অর্ডার, ${r.deposits} টি ডিপোজিট, ${r.tickets} টি টিকেট, ${r.requests} টি রিকোয়েস্ট ও ${r.xp} টি XP লগ মোছা হবে${r.freeMb?` (প্রায় ${r.freeMb} MB জায়গা খালি হবে)`:''}। ইউজার, ব্যালেন্স ও মোট হিসাব ঠিক থাকবে। মুছবেন?`))return;
+    await srv('/adm/cleanup',{days:d});toast('মুছে ফেলা হয়েছে','ok');S._usT=0;refresh()}catch(e){toast(e.message,'er')}};
+  $('#clB').onclick=cl;if($('#clB2'))$('#clB2').onclick=cl;
 }
 
 /* REQUESTS */
