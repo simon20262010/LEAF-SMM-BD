@@ -87,6 +87,7 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
 </div>
 <div class="mo hide" id="mo"><div id="mc"></div></div>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script type="module">
 /* ============ 🔧 index.html এর সাথে একই Firebase কনফিগ বসান ============ */
 const firebaseConfig = {
@@ -101,7 +102,7 @@ const firebaseConfig = {
 };
 /* ====================================================================== */
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,updatePassword,reauthenticateWithCredential,EmailAuthProvider,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signInWithCustomToken,createUserWithEmailAndPassword,updatePassword,reauthenticateWithCredential,EmailAuthProvider,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const app=initializeApp(firebaseConfig),auth=getAuth(app);
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -183,9 +184,21 @@ async function refresh(){
   if(id==_rf&&!(cur=='set'&&document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)))render();
   else if(id==_rf)badges();
 }
+let tgTried=false;
+async function tgLogin(){
+  const W=window.Telegram?.WebApp;if(!W||!W.initData)return false;
+  try{
+    const base=await botServer();if(!base)return false;
+    const r=await fetch(base+'/adm/tg',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({initData:W.initData})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.token){if(j.error)toast(j.error,'er');return false}
+    await signInWithCustomToken(auth,j.token);return true;
+  }catch{return false}
+}
 onAuthStateChanged(auth,async u=>{
   if(settingUp)return;
   S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._pt);
+  if(!u&&!tgTried&&window.Telegram?.WebApp?.initData){tgTried=true;if(await tgLogin())return}
   if(!u){$('#panel').classList.add('hide');$('#login').classList.remove('hide');chk();return}
   await enter(u);
 });
