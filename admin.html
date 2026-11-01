@@ -350,10 +350,15 @@ function rTools(){
   <div class="card"><h2 class="t" style="font-size:16px">💳 ডিপোজিট: অটো ভেরিফাই ও বোনাস</h2>
   <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="aVf" style="width:auto" ${s.autoVerify?'checked':''}> SMS মিললে ডিপোজিট নিজে থেকে অ্যাপ্রুভ হবে (না মিললে ম্যানুয়ালই থাকবে)</label>
   <label>SMS ফরওয়ার্ডারের গোপন কী (smsKey)</label><input id="aKy" value="${esc(s.smsKey||'')}" placeholder="লম্বা একটা র‍্যান্ডম কী দিন" autocomplete="off">
-  <div style="font-size:12.5px;color:var(--mu);line-height:1.8;margin:6px 0">📲 <b>সেটআপ:</b> যে ফোনে bKash/Nagad মার্চেন্ট SMS আসে সেখানে একটি SMS-ফরওয়ার্ডার অ্যাপ (যেমন "SMS Forwarder"/"HTTP SMS") ইনস্টল করুন → ওয়েবহুক URL: <b>https://leaf-smm-bd-s.onrender.com/pay/sms?key=আপনার_কী</b> → POST, JSON বডিতে <code>{"from":"%from%","text":"%text%"}</code>। ৩-৪টা আসল SMS পাঠিয়ে ডিপোজিট টেস্ট করুন। ইউজারের TrxID, টাকা ও যে নাম্বার থেকে পাঠিয়েছে সব না মিললে অটো হবে না।</div>
+  <div style="font-size:12.5px;color:var(--mu);line-height:1.8;margin:6px 0">📲 <b>সেটআপ:</b> যে ফোনে bKash/Nagad মার্চেন্ট SMS আসে সেখানে একটি SMS-ফরওয়ার্ডার অ্যাপ (যেমন "SMS Forwarder"/"HTTP SMS") ইনস্টল করুন → ওয়েবহুক URL: <b>https://leaf-smm-bd-s.onrender.com/pay/sms?key=আপনার_কী</b> → POST, Json Payload Template-এ <code>{"from":"%from%","text":"%text%"}</code>, Headers-এ <code>{"Content-Type":"application/json"}</code>, Sender-এ <code>bKash|NAGAD</code> (regex চালু)। ৩-৪টা আসল SMS পাঠিয়ে ডিপোজিট টেস্ট করুন। ইউজারের TrxID, টাকা ও যে নাম্বার থেকে পাঠিয়েছে সব না মিললে অটো হবে না।</div>
   <label>ডিপোজিট বোনাস (প্রতি লাইনে: ন্যূনতম_টাকা=বোনাস%) যেমন 1000=5</label><textarea id="aBr" rows="3">${esc(s.depBonusRules||'')}</textarea>
   <label>প্রথম ডিপোজিটে বাড়তি বোনাস (%)</label><input id="aFb" type="number" min="0" step="0.1" value="${s.firstDepBonus||0}">
   <label>পেন্ডিং ডিপোজিট কত মিনিট পরে আপনাকে মনে করাবে (০ = বন্ধ)</label><input id="aPa" type="number" min="0" value="${s.depAlertMin??30}">
+  <label>SMS ফরওয়ার্ডার অ্যাপের ডাউনলোড লিংক (ঐচ্ছিক, APK ফাইলের বিকল্প)</label><input id="aAu" value="${esc(s.smsApkUrl||'')}" placeholder="https://...apk">
+  <div id="aAs" style="font-size:12.5px;color:var(--mu);line-height:1.7;margin:6px 0">📲 <b>রিসেলারদের জন্য অ্যাপ (APK):</b> মূল বটে APK ফাইলটা পাঠান এবং ক্যাপশনে <b>/setapk</b> লিখুন। তখন রিসেলাররা প্যানেলের "অটো পেমেন্ট" বাটন থেকে অ্যাপ নিতে পারবে। <span id="aAk"></span></div>
+  <label>🧪 SMS পরীক্ষা (আসল একটা টাকা পাওয়ার SMS পেস্ট করুন)</label><textarea id="aTx" rows="2" maxlength="600"></textarea>
+  <button class="btn s" id="aTb" style="margin-top:6px">পরীক্ষা করুন</button><div id="aTr" style="font-size:13px;line-height:1.7;margin-top:6px"></div>
+  <div id="aUm" style="font-size:12.5px;margin-top:8px"></div>
   <button class="btn" id="aSv" style="margin-top:12px">সেভ</button></div>
   <div class="card"><h2 class="t" style="font-size:16px">🔥 ফ্ল্যাশ সেল ও অর্ডার নিয়ম</h2>
   <div class="fg"><div><label>ফ্ল্যাশ সেল ছাড় % (০ = বন্ধ)</label><input id="fPc" type="number" min="0" max="90" value="${s.flashPct||0}"></div>
@@ -392,7 +397,11 @@ function rTools(){
   const ck=async(p,b)=>{const r=await srv(p,b);if(r.error)throw new Error(r.error);return r};
   $('#tSave').onclick=()=>{const v={dupBlock:$('#tDup').checked,maxDailyOrders:+$('#tMax').value||0,provMin:+$('#tPm').value||0,refPrize:$('#tRp').value.trim()};return dbw('set','settings','main',v,true).then(()=>{Object.assign(S.set,v);toast('সেভ হয়েছে','ok')}).catch(e=>toast(e.message,'er'))};
   const sv=(ids)=>dbw('set','settings','main',ids,true).then(()=>{Object.assign(S.set,ids);toast('সেভ হয়েছে','ok')}).catch(e=>toast(e.message,'er'));
-  $('#aSv').onclick=()=>sv({autoVerify:$('#aVf').checked,smsKey:$('#aKy').value.trim(),depBonusRules:$('#aBr').value.trim(),firstDepBonus:+$('#aFb').value||0,depAlertMin:+$('#aPa').value||0});
+  $('#aSv').onclick=()=>sv({autoVerify:$('#aVf').checked,smsKey:$('#aKy').value.trim(),depBonusRules:$('#aBr').value.trim(),firstDepBonus:+$('#aFb').value||0,depAlertMin:+$('#aPa').value||0,smsApkUrl:$('#aAu').value.trim()});
+  const ai=async(t)=>{try{return fx(await ck('/adm/auto-info',{text:t||''}))}catch(e){toast(e.message,'er');return {}}};
+  ai().then(r=>{if(!r.apk)return;$('#aAk').innerHTML=r.apk.has?`✅ ফাইল সেট আছে: <b>${esc(r.apk.name)}</b> (${r.apk.kb} KB)`:'❌ এখনো কোনো ফাইল সেট হয়নি';
+    $('#aUm').innerHTML=(r.unmatched||[]).length?'<b>📥 SMS এসেছে কিন্তু মেলেনি (৩ দিন):</b><br>'+r.unmatched.map(x=>`${esc(x.trx)} • ${tk(x.amount)} • ${esc(x.sender||'—')}`).join('<br>'):''});
+  $('#aTb').onclick=async()=>{const t=$('#aTx').value.trim();if(!t)return toast('SMS পেস্ট করুন','er');const x=await ai(t),p=x.parsed;$('#aTr').innerHTML=p?`✅ TrxID <b>${esc(p.trx)}</b> • টাকা <b>${tk(p.amount)}</b> • নাম্বার <b>${esc(p.sender||'পাওয়া যায়নি')}</b>${x.hint?'<br><span style="color:#d97706">'+esc(x.hint)+'</span>':''}`:`<span style="color:#dc2626">❌ ${esc(x.hint||'বোঝা যায়নি')}</span>`};
   $('#fSv').onclick=()=>{const v={flashPct:+$('#fPc').value||0,flashScope:$('#fSc').value.trim()||'all',linkCheck:$('#fLc').checked,bigOrder:+$('#fBg').value||0,cannedReplies:$('#fCn').value.trim()},h=+$('#fHr').value;
     if(!v.flashPct)v.flashEnd=0;else if(h>0)v.flashEnd=Math.floor(Date.now()/1000+h*3600);return sv(v)};
   $('#wSv').onclick=()=>sv({winbackDays:+$('#wDy').value||0,winbackText:$('#wTx').value.trim(),resellerMonthlyFee:+$('#wFe').value||0,autoClean:$('#wAc').checked});
@@ -559,5 +568,5 @@ function rSet(){
 }
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1101b</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1101e</div></body>
 </html>
