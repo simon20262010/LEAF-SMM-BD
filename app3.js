@@ -143,17 +143,42 @@ async function rbAuto(){const r=await api('/rb/auto',{op:'status'});const e=$('#
   e.innerHTML=r.on?`✅ <b>চালু আছে</b> • এসএমএস এসেছে ${r.smsCount} বার${r.lastSmsAt?' • সর্বশেষ '+new Date(r.lastSmsAt*1000).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):' • এখনো কোনো এসএমএস আসেনি'} • অটো অ্যাপ্রুভ ${r.autoCount} টি`:'⛔ বন্ধ আছে'}
 async function rbAutoOpen(op){
   const r=await api('/rb/auto',{op:op||'enable'});if(r.error)return toast(r.error,'er');
+  const f=await api('/rb/auto-info',{}).catch(()=>({}));const ap=f.apk||{},um=f.unmatched||[];
+  const row=(l,v,id)=>`<label class="l">${l}</label><div style="display:flex;gap:8px;align-items:center"><input id="${id}" readonly value="${esc(v)}" onclick="this.select()" style="flex:1;margin:0;font:600 12px ui-monospace,Menlo,monospace"><button class="btn" data-cp="${id}" style="width:auto;margin:0;padding:11px 14px;font-size:13px;background:#64748b;box-shadow:none"><i class="fa-regular fa-copy"></i></button></div>`;
   G(`<div class="sec"><i class="fa-solid fa-bolt"></i>অটো পেমেন্ট ${r.on?'✅ চালু':'⛔ বন্ধ'}</div>
-  <div style="font-size:13.5px;line-height:1.8">যে ফোনে আপনার bKash/Nagad/Rocket-এ টাকা আসার এসএমএস আসে, সেই ফোনে একটা <b>SMS ফরওয়ার্ডার</b> অ্যাপ (Play Store এ "SMS Forwarder" / "HTTP SMS" / "SMS to URL") ইনস্টল করে নিচের মতো সেট করুন:</div>
-  <label class="l">১) Webhook URL (POST)</label><input id="aU" readonly value="${esc(r.url)}" style="font-size:12px"><button class="btn" id="aUc" style="background:#64748b;box-shadow:none"><i class="fa-regular fa-copy"></i> URL কপি করুন</button>
-  <label class="l">২) বডি (JSON) — Content-Type: application/json</label><input id="aB" readonly value='${esc(r.body)}' style="font-size:12px"><button class="btn" id="aBc" style="background:#64748b;box-shadow:none"><i class="fa-regular fa-copy"></i> বডি কপি করুন</button>
-  <div style="font-size:12.5px;color:var(--mu);line-height:1.8;margin:10px 0">• অ্যাপে শুধু পেমেন্ট এসএমএস (bKash/Nagad নাম্বার) ফরওয়ার্ড করুন।<br>• %text% এর জায়গায় অ্যাপ নিজে এসএমএসের লেখা বসাবে (অ্যাপভেদে লেখাটা {sms}/%m ইত্যাদি হতে পারে)।<br>• সেট করে নিজের নাম্বারে ছোট টাকা পাঠিয়ে টেস্ট করুন: এসএমএস এলে এই পেজে "এসএমএস এসেছে" সংখ্যা বাড়বে।<br>• এই URL গোপন রাখুন। কেউ জেনে গেলে "নতুন কী" চাপুন।<br>• ডিপোজিটে লেখা নাম্বার, TrxID ও টাকা এসএমএসের সাথে হুবহু না মিললে অটো হবে না, আপনার বটে ম্যানুয়াল অ্যাপ্রুভ আসবে।</div>
-  <button class="btn" id="aNk" style="background:#f59e0b;box-shadow:none">🔄 নতুন কী</button>
+  <div style="font-size:13px;color:var(--mu);line-height:1.7">কাস্টমার ডিপোজিট দিলে তার TrxID, টাকা ও নাম্বার আপনার ফোনের SMS-এর সাথে মিললে ব্যালেন্স নিজে যোগ হবে। না মিললে আপনার বটে আগের মতো অ্যাপ্রুভ/রিজেক্ট বাটন আসবে।</div>
+  <div class="pc" style="margin:12px 0"><b>ধাপ ১ — অ্যাপ নিন</b>
+  <div style="font-size:13px;line-height:1.7;margin:6px 0">যে ফোনে bKash/Nagad-এর টাকা পাওয়ার SMS আসে, সেই ফোনে এই অ্যাপ ইনস্টল করুন (SMS পড়ার অনুমতি দেবেন):</div>
+  ${ap.has?`<button class="btn" id="aApk"><i class="fa-solid fa-download"></i> SMS ফরওয়ার্ডার অ্যাপ নিন${ap.kb?' ('+ap.kb+' KB)':''}</button><div style="font-size:12px;color:var(--mu)">অ্যাপটি আপনার টেলিগ্রামে এই বটে ফাইল হিসেবে চলে আসবে।</div>`:ap.link?`<button class="btn" id="aApk"><i class="fa-solid fa-download"></i> অ্যাপ ডাউনলোড</button>`:`<div class="empty" style="padding:8px">অ্যাপ এখনো যোগ হয়নি — সাপোর্টে জানান</div>`}</div>
+  <div class="pc" style="margin:12px 0"><b>ধাপ ২ — অ্যাপে নতুন রুল বানান</b>
+  <div style="font-size:13px;line-height:1.8;margin:6px 0">অ্যাপে <b>+</b> চেপে নতুন রুল খুলুন, তারপর নিচের ঘরগুলো এভাবে ভরুন (কপি বাটন চাপলেই কপি হবে):</div>
+  ${row('Sender (SMS যার নামে আসে)','bKash|NAGAD','aS')}
+  <div style="font-size:12px;color:var(--mu);margin:4px 0">• "Sender is a regular expression" চালু করুন।<br>• আপনার ইনবক্সে টাকার SMS কার নামে আসে দেখে নিন, নাম ভিন্ন হলে সেটা লিখুন।<br>• Text filter ফাঁকা রাখুন।</div>
+  ${row('Webhook URL','','aU').replace('value=""','value="'+esc(r.url)+'"')}
+  <div style="font-size:12px;color:var(--mu);margin:4px 0">• ⚠️ এই URL শুধু আপনার। কাউকে দেবেন না।</div>
+  <div style="font-size:12.5px;margin:10px 0 2px"><b>ADVANCED PARAMETERS</b> খুলুন:</div>
+  ${row('Json Payload Template','{"from":"%from%","text":"%text%"}','aB')}
+  ${row('Headers','{"Content-Type":"application/json"}','aH')}
+  <div style="font-size:12px;color:var(--mu);margin:6px 0;line-height:1.7">• Sim Slot: any • Number of retries: 10<br>• বাকি সব সুইচ (SSL ignore, Chunked, HMAC) বন্ধ রাখুন।<br>• প্রথমে <b>TEST</b> চাপুন, তারপর <b>SAVE</b>।</div></div>
+  <div class="pc" style="margin:12px 0"><b>ধাপ ৩ — ফোন ঠিক রাখুন</b>
+  <div style="font-size:13px;line-height:1.8;margin-top:6px">• ফোনের Settings → Apps → অ্যাপটি → Battery → <b>Unrestricted</b>।<br>• ফোনে মোবাইল ডাটা/ওয়াইফাই চালু থাকতে হবে।<br>• অ্যাপ ফোর্স-স্টপ বা টাস্ক-কিল করবেন না।</div></div>
+  <div class="pc" style="margin:12px 0"><b>ধাপ ৪ — টেস্ট করুন</b>
+  <div style="font-size:13px;line-height:1.8;margin:6px 0">অন্য নাম্বার থেকে ১০ টাকা পাঠান → কাস্টমার হিসেবে বটে ওই টাকা, ওই নাম্বার ও TrxID দিয়ে ডিপোজিট দিন → ব্যালেন্স নিজে যোগ হলে কাজ করছে। এসএমএস এলে নিচের সংখ্যা বাড়বে।</div>
+  <div id="aSt" style="font-size:13px"></div></div>
+  <div class="pc" style="margin:12px 0"><b>🧪 SMS পরীক্ষা</b>
+  <div style="font-size:12.5px;color:var(--mu);margin:6px 0">টাকা পাওয়ার একটা আসল SMS এখানে পেস্ট করুন, সিস্টেম বুঝতে পারছে কিনা দেখুন:</div>
+  <textarea id="aT" rows="3" placeholder="You have received Tk 500.00 from 01XXXXXXXXX. TrxID ..." maxlength="600"></textarea>
+  <button class="btn" id="aTb" style="background:#64748b;box-shadow:none">পরীক্ষা করুন</button><div id="aTr" style="font-size:13px;line-height:1.7"></div></div>
+  ${um.length?`<div class="pc" style="margin:12px 0"><b>📥 SMS এসেছে কিন্তু মেলেনি</b><div style="font-size:12px;color:var(--mu);margin:4px 0">এই টাকাগুলোর জন্য কাস্টমার এখনো ডিপোজিট দেয়নি (৩ দিনের মধ্যে)</div>${um.map(x=>`<div class="hi" style="padding:6px 0"><span>${esc(x.trx)} • ${tk(x.amount)} • ${esc(x.sender||'—')}</span></div>`).join('')}</div>`:''}
+  <button class="btn" id="aNk" style="background:#f59e0b;box-shadow:none">🔄 নতুন কী (URL বদলাবে)</button>
   <button class="btn" id="aOf" style="background:${r.on?'#dc2626':'#16a34a'};box-shadow:none">${r.on?'অটো পেমেন্ট বন্ধ করুন':'আবার চালু করুন'}</button>`);
-  const cp=async(id)=>{try{await navigator.clipboard.writeText($(id).value);toast('কপি হয়েছে','ok')}catch{$(id).select();document.execCommand('copy');toast('কপি হয়েছে','ok')}};
-  $('#aUc').onclick=()=>cp('#aU');$('#aBc').onclick=()=>cp('#aB');
-  $('#aNk').onclick=()=>{if(confirm('নতুন কী নিলে আগের URL আর কাজ করবে না, ফরওয়ার্ডারে নতুন URL বসাতে হবে। নিশ্চিত?'))rbAutoOpen('regen')};
+  $$('[data-cp]').forEach(b=>b.onclick=async()=>{const i=$('#'+b.dataset.cp);try{await navigator.clipboard.writeText(i.value)}catch{i.select();document.execCommand('copy')}toast('কপি হয়েছে','ok')});
+  const ak=$('#aApk');if(ak)ak.onclick=async()=>{if(!ap.has){window.open(ap.link,'_blank');return}ak.disabled=true;const x=await api('/rb/apk',{});ak.disabled=false;if(x.error)return toast(x.error,'er');x.link?window.open(x.link,'_blank'):toast('✅ অ্যাপ আপনার টেলিগ্রামে পাঠানো হয়েছে','ok')};
+  $('#aTb').onclick=async()=>{const t=$('#aT').value.trim();if(!t)return toast('SMS পেস্ট করুন','er');const x=await api('/rb/auto-info',{text:t});const p=x.parsed;
+    $('#aTr').innerHTML=p?`✅ TrxID: <b>${esc(p.trx)}</b> • টাকা: <b>${tk(p.amount)}</b> • নাম্বার: <b>${esc(p.sender||'পাওয়া যায়নি')}</b>${x.hint?'<br><span style="color:#d97706">'+esc(x.hint)+'</span>':'<br>সিস্টেম এই SMS ঠিকমতো বুঝতে পারছে।'}`:`<span style="color:#dc2626">❌ ${esc(x.hint||'বোঝা যায়নি')}</span>`};
+  $('#aNk').onclick=()=>{if(confirm('নতুন কী নিলে আগের URL আর কাজ করবে না, অ্যাপে নতুন URL বসাতে হবে। নিশ্চিত?'))rbAutoOpen('regen')};
   $('#aOf').onclick=async()=>{if(r.on){await api('/rb/auto',{op:'disable'});toast('বন্ধ হয়েছে','ok');$('#gModal').classList.add('hide');rbAuto()}else rbAutoOpen('enable')};
+  api('/rb/auto',{op:'status'}).then(s=>{const e=$('#aSt');if(e&&!s.error)e.innerHTML=`এসএমএস এসেছে <b>${s.smsCount}</b> বার${s.lastSmsAt?' • সর্বশেষ '+new Date(s.lastSmsAt*1000).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):' • এখনো কোনো এসএমএস আসেনি'} • অটো অ্যাপ্রুভ <b>${s.autoCount}</b> টি`});
   rbAuto();
 }
 function img64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.85))};im.onerror=rej;im.src=r.result};r.onerror=rej;r.readAsDataURL(f)})}
