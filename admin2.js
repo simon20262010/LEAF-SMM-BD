@@ -1,0 +1,47 @@
+/* ===== admin2: নতুন পেজ — সুরক্ষা ও লগ, নতুন ফিচার সেটিং ===== */
+const A=()=>window.__A,$=s=>document.querySelector(s);
+const ago=t=>{if(!t)return'';const m=Math.max(0,(Date.now()/1000-t)/60|0);return m<1?'এইমাত্র':m<60?m+' মি আগে':m<1440?(m/60|0)+' ঘ আগে':(m/1440|0)+' দিন আগে'};
+
+/* ---------- 🛡 সুরক্ষা ও লগ ---------- */
+window.__X.ops=function(){
+  const {esc,tk}=A(),el=$('#v-ops');if(el._on)return;el._on=true;
+  el.innerHTML=`<h2 class="t">🛡 সুরক্ষা ও লগ</h2>
+  <div class="card"><h2 class="t sub">🐞 এরর লগ <span><button class="btn s gr" id="oEr">রিফ্রেশ</button> <button class="btn s r" id="oEc">সব মুছুন</button></span></h2><div id="oErL" class="empty">লোড হচ্ছে...</div><small class="mu">একই এরর বারবার হলে একবারই দেখায় (×সংখ্যা)। ১৪ দিন পর নিজে মুছে যায়। টেলিগ্রামে /errors লিখলেও দেখা যায়।</small></div>
+  <div class="card"><h2 class="t sub">🧮 ব্যালেন্স অডিট <button class="btn s gr" id="oAu">চালান</button></h2><div id="oAuL" class="empty">“চালান” চাপুন</div></div>
+  <div class="card"><h2 class="t sub">📱 একই ডিভাইস/আইপিতে একাধিক অ্যাকাউন্ট <button class="btn s gr" id="oDv">দেখুন</button></h2><div id="oDvL" class="empty">“দেখুন” চাপুন</div><small class="mu">মোবাইল নেটওয়ার্কে অনেকে একই আইপি শেয়ার করে, তাই এটা শুধু সন্দেহের ইঙ্গিত — সরাসরি ব্যান করার আগে যাচাই করুন।</small></div>`;
+  const er=async()=>{const j=await A().srv('/adm/errors',{}).catch(()=>({error:1}));const b=$('#oErL');if(j.error){b.textContent='লোড হয়নি';return}
+    b.className='';b.innerHTML=(j.items||[]).map(x=>`<div class="lr ${x.lvl=='ERROR'||x.lvl=='CRITICAL'?'bad':'warn'}"><div><b>${esc(x.lvl)}</b> ×${x.n} <small>${ago(x.t)}</small></div><code>${esc(x.msg.slice(0,300))}</code></div>`).join('')||'<div class="empty">✅ কোনো এরর নেই</div>'};
+  $('#oEr').onclick=er;$('#oEc').onclick=async()=>{if(!confirm('সব এরর লগ মুছবেন?'))return;await A().srv('/adm/errors',{op:'clear'});er()};er();
+  $('#oAu').onclick=async()=>{const b=$('#oAuL');b.textContent='হিসাব হচ্ছে...';const j=await A().srv('/adm/audit',{}).catch(()=>({error:1}));if(j.error){b.textContent='লোড হয়নি';return}
+    b.className='';b.innerHTML=`<div class="stats" style="margin-bottom:10px"><div class="sc" style="background:#1e88e5"><small>ইউজারদের মোট ব্যালেন্স</small><b>${tk(j.totalBalance)}</b></div><div class="sc" style="background:#16a34a"><small>মোট ডিপোজিট</small><b>${tk(j.totalDeposit)}</b></div></div>`+
+      `<h3 class="h3">🔴 নেগেটিভ ব্যালেন্স (${j.negative.length})</h3>`+(j.negative.map(u=>`<div class="lr bad"><div>${esc(u.name)} <small>${esc(u.id)}</small></div><b>${tk(u.balance)}</b></div>`).join('')||'<div class="empty" style="padding:8px">নেই ✅</div>')+
+      `<h3 class="h3">🟠 অস্বাভাবিক বেশি ব্যালেন্স (${j.odd.length})</h3>`+(j.odd.map(u=>`<div class="lr warn"><div>${esc(u.name)} <small>${esc(u.id)}</small><br><small>উৎস ≈ ${tk(u.src)}</small></div><b>${tk(u.balance)}</b></div>`).join('')||'<div class="empty" style="padding:8px">নেই ✅</div>')+`<small class="mu">${esc(j.note||'')}</small>`};
+  $('#oDv').onclick=async()=>{const b=$('#oDvL');b.textContent='লোড হচ্ছে...';const j=await A().srv('/adm/suspects-more',{}).catch(()=>({error:1}));if(j.error){b.textContent='লোড হয়নি';return}
+    b.className='';b.innerHTML=(j.devices||[]).map(d=>`<div class="lr warn" style="display:block"><b>${d.users.length} অ্যাকাউন্ট</b> <small>${esc(d.ip||'')}</small><br>${d.users.map(u=>`<span class="chip">${esc(u.name)}${u.banned?' 🚫':''}</span>`).join('')}</div>`).join('')||'<div class="empty">কোনো সন্দেহজনক ডিভাইস নেই ✅</div>'};
+};
+
+/* ---------- ✨ নতুন ফিচার সেটিং ---------- */
+window.__X.feat=function(){
+  const {esc,toast,dbw,S}=A(),el=$('#v-feat');if(el._on)return;el._on=true;const s=S.set||{};
+  const ck=(id,v,t,h)=>`<label class="ck"><input type="checkbox" id="${id}" ${v?'checked':''}><span><b>${t}</b>${h?`<small>${h}</small>`:''}</span></label>`;
+  const nm=(id,v,t,h,st='1')=>`<div><label>${t}</label><input id="${id}" type="number" min="0" step="${st}" value="${v??''}">${h?`<small class="mu">${h}</small>`:''}</div>`;
+  el.innerHTML=`<h2 class="t">✨ নতুন ফিচার সেটিং <button class="btn" id="fSave">💾 সব সেভ করুন</button></h2>
+  <div class="card"><h2 class="t sub">🛡 অর্ডার সুরক্ষা</h2>
+   ${ck('fRef',s.autoRefundFail!==false,'প্রোভাইডার রিজেক্ট করলে অটো রিফান্ড','প্রোভাইডার অর্ডার ফিরিয়ে দিলে ইউজার নিজে থেকে টাকা ফেরত পাবে')}
+   ${ck('fLive',s.linkLive!==false,'লিংক জীবিত কিনা চেক','YouTube/TikTok ভিডিও লিংক মরা (ডিলিটেড) হলে অর্ডার আটকাবে। চেক না হলে অর্ডার যেতে দেয়')}
+   <div class="fg">${nm('fDup',s.dupHours??0,'একই লিংকে একই সার্ভিস আবার নিতে বাধা (ঘণ্টা)','০ = বন্ধ। যেমন ২৪ দিলে ২৪ ঘণ্টা আবার একই সার্ভিস একই লিংকে নেওয়া যাবে না (অন্য সার্ভিস যাবে)')}
+   ${nm('fNo',s.newUserOrders??3,'নতুন ইউজার (প্রথম কয়টা অর্ডার)','এই কয়টা অর্ডার পর্যন্ত নিচের সীমা খাটবে')}
+   ${nm('fNc',s.newUserCap??0,'নতুন ইউজারের সর্বোচ্চ অর্ডার মূল্য (৳)','০ = সীমা নেই। বড় অর্ডার আটকে অ্যাডমিনকে জানায়','0.01')}</div></div>
+  <div class="card"><h2 class="t sub">🔥 ফ্ল্যাশ সেল স্টক</h2><div class="fg">${nm('fFl',s.flashLeft,'ফ্ল্যাশ সেলে বাকি অর্ডার সংখ্যা','ফাঁকা = সীমাহীন। প্রতি অর্ডারে ১ কমে, ০ হলে ছাড় বন্ধ। ইউজার “শেষ N টা” দেখবে')}</div></div>
+  <div class="card"><h2 class="t sub">💰 মাসিক ক্যাশব্যাক</h2><div class="fg">${nm('fCb',s.cashbackPct??0,'ক্যাশব্যাক (%)','০ = বন্ধ। প্রতি মাসের ১ তারিখে গত মাসের খরচের উপর','0.1')}${nm('fCm',s.cashbackMin??5000,'ন্যূনতম মাসিক খরচ (৳)','এর কম খরচ করলে ক্যাশব্যাক নেই')}</div></div>
+  <div class="card"><h2 class="t sub">💸 ব্যালেন্স ট্রান্সফার</h2>${ck('fTr',!!s.transferOn,'ট্রান্সফার চালু','মূল বটের ইউজাররা একে অপরকে টাকা পাঠাতে পারবে (ফি আপনার)')}
+   <div class="fg">${nm('fTf',s.transferFeePct??2,'ফি (%)','','0.1')}${nm('fTm',s.transferMin??10,'ন্যূনতম পরিমাণ (৳)')}${nm('fTd',s.transferNeedDep??50,'পাঠাতে মোট ডিপোজিট লাগবে (৳)','ফ্রড ঠেকাতে')}${nm('fTx',s.transferDailyMax??5000,'দৈনিক সর্বোচ্চ (৳)')}</div></div>
+  <div class="card"><h2 class="t sub">🎫 টিকেট অটো-রিপ্লাই</h2><label>অটো উত্তর (প্রতি লাইনে: কীওয়ার্ড১,কীওয়ার্ড২|উত্তর)</label><textarea id="fFq" rows="5" placeholder="refund,টাকা ফেরত|রিফান্ড ২৪ ঘণ্টার মধ্যে ব্যালেন্সে যোগ হয়।&#10;slow,দেরি|অর্ডার শুরু হতে ১-২ ঘণ্টা লাগতে পারে।">${esc(s.faqAuto||'')}</textarea>
+   <label>কীওয়ার্ড না মিললে যে উত্তর যাবে ({ticketEta} ব্যবহার করা যায়)</label><input id="fEt" value="${esc(s.ticketEta||'')}" placeholder="যেমন: ২৪ ঘণ্টার মধ্যে উত্তর পাবেন"></div>
+  <div class="card"><h2 class="t sub">📊 রিপোর্ট</h2>${ck('fDr',s.dailyReport!==false,'দৈনিক লাভ রিপোর্ট','প্রতিদিন রাত ১১:৫০ এ অ্যাডমিনদের টেলিগ্রামে আজকের বিক্রি, খরচ ও লাভ')}</div>`;
+  $('#fSave').onclick=async()=>{const n=id=>{const v=$(id).value.trim();return v===''?null:+v};
+    const v={autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,dupHours:n('#fDup')||0,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
+      transferOn:$('#fTr').checked,transferFeePct:n('#fTf')??2,transferMin:n('#fTm')??10,transferNeedDep:n('#fTd')??50,transferDailyMax:n('#fTx')??5000,faqAuto:$('#fFq').value.trim(),ticketEta:$('#fEt').value.trim(),dailyReport:$('#fDr').checked};
+    try{await dbw('set','settings','main',v,true);Object.assign(S.set,v);toast('✅ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+};
+//==END==
