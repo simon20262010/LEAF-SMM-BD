@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1101e";window.__E=[];
+window.__V="v1102a";window.__E=[];
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -223,7 +223,7 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
 #gate .gbtn{width:100%;border:0;border-radius:16px;padding:15px;margin-top:10px;background:#fff;color:#1565c0;font:700 16px 'Hind Siliguri';cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.2);transition:transform .15s}
 #gate .gbtn:active{transform:scale(.97)}#gate .gbtn:disabled{opacity:.7}
 #gate .gs{margin-top:16px;border:0;display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.16);color:#fff;border-radius:30px;padding:9px 16px;font:600 13px 'Hind Siliguri';cursor:pointer}
-</style>
+.rxb{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:6px 10px;font:600 12px inherit;cursor:pointer}</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -394,9 +394,9 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
 <div class="modal hide" id="gModal"><div id="gBody"></div></div>
 
 <script>
-/* অ্যাপ কোড ৩টি ছোট ফাইলে (app1.js, app2.js, app3.js) — ফোন থেকে পেস্টে কেটে যাওয়া ঠেকাতে */
+/* অ্যাপ কোড ৩টি ছোট ফাইলে (app1–4.js) — ফোন থেকে পেস্টে কেটে যাওয়া ঠেকাতে */
 (async function(){
-  var F=["app1.js","app2.js","app3.js"],V=window.__V||"v",code="";
+  var F=["app1.js","app2.js","app3.js","app4.js"],V=window.__V||"v",code="";
   function fail(m){var l=document.getElementById('load');if(l){l.classList.remove('hide');l.innerHTML='<div style="padding:24px;text-align:center;font:14px/1.7 sans-serif;color:#334155"><b>⚠️ '+m+'</b></div>'}window.__E.push(m)}
   try{
     for(var i=0;i<F.length;i++){
@@ -410,5 +410,5 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
   }catch(e){fail("অ্যাপ চালু হয়নি: "+String(e&&e.message||e).slice(0,120))}
 })();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1101e</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1102a</div></body>
 </html>
