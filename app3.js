@@ -37,7 +37,7 @@ async function syncNow(fresh){
     if(j.error||j.same)return;
     S._h=j.h;const x=fx(j);S.me=x.me;S.orders=x.orders;S.deps=x.deps;S.tix=x.tix;S.reqs=x.reqs;S.team=x.team;
     renderAll();rOrders();rSet();rDeps();rTix();rRef();if(S._rq)S._rq();lvUp();loadBundles();loadSched();
-  }catch(e){console.warn(e)}finally{S._syncing=false}
+  }catch(e){console.warn(e)}finally{S._syncing=false;if(!S._booted){S._booted=true;clearTimeout(S._bt);if(!S._gate||!$('#gate'))$('#load').classList.add('hide')}}
 }
 function lvUp(){
   try{const k='lv_'+S.uid,li=lvIdx(S.me.totalSpent||0);let p=null;try{p=localStorage.getItem(k)}catch{}
@@ -109,6 +109,7 @@ async function rbManage(b){
   <div class="pc"><div style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:10px">কাস্টমার ডিপোজিট করলে TrxID, টাকা ও নাম্বার আপনার এসএমএসের সাথে মিললে নিজে থেকে ব্যালেন্স যোগ হবে। না মিললে আগের মতো আপনার বটে অ্যাপ্রুভ/রিজেক্ট আসবে। এসএমএস ফরওয়ার্ড আপনি নিজে সেট করবেন।</div>
   <div id="rbAuS" style="font-size:13px;margin-bottom:8px"></div><button class="btn" id="rbAu" style="background:linear-gradient(135deg,#f59e0b,#d97706)"><i class="fa-solid fa-bolt"></i> অটো পেমেন্ট</button></div>
 
+  <div id="rbX"></div>
   <div class="sec"><i class="fa-solid fa-bullhorn"></i>চ্যানেল</div>
   <div class="pc"><label class="l" style="margin-top:0">অর্ডার চ্যানেল (@নাম বা -100…)</label><input id="rbOc" class="rbi" value="${esc(b.orderChannel||'')}">
   <label class="l">ফোর্স জয়েন চ্যানেল (প্রতি লাইনে একটি)</label><textarea id="rbFc" rows="3" class="rbi" placeholder="@channel&#10;-100123|https://t.me/+invite">${esc((b.forceChannels||[]).join('\n'))}</textarea>
@@ -127,7 +128,7 @@ async function rbManage(b){
   $('#rbPs').onclick=()=>upd({methods:$('#rbMt').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(a=>a[0]&&a[1]).map(a=>({name:a[0],number:a[1],note:a[2]||''})),supportLink:$('#rbSl').value.trim(),notice:$('#rbNt').value.trim()});
   $('#rbCs').onclick=()=>upd({orderChannel:$('#rbOc').value.trim(),forceChannels:$('#rbFc').value.split('\n').map(x=>x.trim()).filter(Boolean)});
   $('#rbTp').onclick=async()=>{const r=await api('/rb/test');r.error?toast(r.error,'er'):toast('✅ টেস্ট পোস্ট গেছে','ok')};
-  rbAuto();$('#rbAu').onclick=()=>rbAutoOpen();
+  rbAuto();$('#rbAu').onclick=()=>rbAutoOpen();if(typeof rbExtra=='function')rbExtra(b);
   $('#rbBs').onclick=async()=>{const t=$('#rbBc').value.trim();if(!t)return toast('মেসেজ লিখুন','er');const r=await api('/rb/broadcast',{text:t});r.error?toast(r.error,'er'):(toast('ব্রডকাস্ট শুরু হয়েছে','ok'),$('#rbBc').value='')};
   const ph=(id,key)=>$(id).onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('আপলোড হচ্ছে...');try{const r=await api('/rb/photo',{key,image:await img64(f)});r.error?toast(r.error,'er'):(toast('✅ ছবি সেভ হয়েছে','ok'),loadBot())}catch{toast('ছবি পড়া যায়নি','er')}};
   ph('#rbPo','orderPhoto');ph('#rbPx','xpPhoto');
