@@ -1,3 +1,4 @@
+
 /* ============ 🔧 এখানে আপনার Firebase কনফিগ বসান ============ */
 const firebaseConfig = {
   apiKey: "AIzaSyAR8SaD21V3i5OMPP44KWejhlUHG5__QSA",
@@ -91,7 +92,7 @@ async function tgLogin(){
 window.__boot=1;window.__T=window.__T||[];window.__T.push('boot');
 onAuthStateChanged(auth,u=>{window.__T=window.__T||[];window.__T.push('auth-cb:'+(u?'user':'null'));
   S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._catT);clearInterval(S._pt);S._h='';
-  $('#load').classList.add('hide');
+  if(!u)$('#load').classList.add('hide');else{S._booted=false;clearTimeout(S._bt);S._bt=setTimeout(()=>$('#load').classList.add('hide'),12000)}
   if(u&&TG&&TG.initData&&tgUser&&!S._fix){const ex=BOTID?`rb${BOTID}_${tgUser.id}`:`tg${tgUser.id}`;
     if(u.uid!==ex&&(BOTID||/^(tg|rb)/.test(u.uid))){S._fix=true;S._tgTry=false;$('#load').classList.remove('hide');signOut(auth);return}}
   if(!u){S.uid=null;
@@ -138,7 +139,7 @@ function fillCats(){
 function fillSvcs(){
   const list=S.svcs.filter(s=>s.category==$('#cat').value&&(S.plat=='all'||s.platform==S.plat));
   const fv=favs();list.sort((a,b)=>(fv.includes(b._id)-fv.includes(a._id)));
-  $('#svc').innerHTML=list.map(s=>`<option value="${s._id}">${fv.includes(s._id)?'⭐ ':''}${s.pop?'🔥 ':''}${s.isNew?'🆕 ':''}${s.sale?'💥 ':''}${s.sid} - ${esc(s.name)}</option>`).join('');
+  $('#svc').innerHTML=list.map(s=>`<option value="${s._id}">${fv.includes(s._id)?'⭐ ':''}${s.pop?'🔥 ':''}${s.isNew?'🆕 ':''}${s.sale?'💥 ':''}${s.no||s.sid} - ${esc(s.name)}</option>`).join('');
   pick($('#svc').value);
 }
 function pick(id){
@@ -156,11 +157,11 @@ function linkOk(s,l){if(S.set.linkCheck===false)return true;const d=LINKD[String
 let _sT;function rSale(){const p=+S.set.flashPct||0,en=(+S.set.flashEnd||0)*1000,b=$('#saleBox');clearInterval(_sT);
   if(!(p>0)||(en&&en<Date.now())){b.innerHTML='';return}
   const f=n=>String(n).padStart(2,'0'),upd=()=>{const l=Math.max(0,en-Date.now());if(en&&l<=0){clearInterval(_sT);b.innerHTML='';fetchCatalog&&fetchCatalog();return}const e=document.getElementById('saleCd');if(e)e.textContent=f(Math.floor(l/36e5))+':'+f(Math.floor(l/6e4)%60)+':'+f(Math.floor(l/1e3)%60)};
-  b.innerHTML=`<div class="saleb"><div><b>🔥 ফ্ল্যাশ সেল — ${p}% ছাড়</b><br><small>${esc(S.set.flashScope&&S.set.flashScope!='all'?S.set.flashScope+' সার্ভিসে':'সব সার্ভিসে')}</small></div>${en?'<div class="cd" id="saleCd">--:--:--</div>':''}</div>`;
+  b.innerHTML=`<div class="saleb"><div><b>🔥 ফ্ল্যাশ সেল — ${p}% ছাড়</b><br><small>${esc(S.set.flashScope&&S.set.flashScope!='all'?S.set.flashScope+' সার্ভিসে':'সব সার্ভিসে')}${S.set.flashLeft!=null&&S.set.flashLeft!==''&&isFinite(+S.set.flashLeft)?` · ⏳ শেষ ${Math.max(0,+S.set.flashLeft)} টা`:''}</small></div>${en?'<div class="cd" id="saleCd">--:--:--</div>':''}</div>`;
   if(en){upd();_sT=setInterval(upd,1000)}}
 function rFav(){
   const fv=favs(),l=fv.map(id=>S.svcs.find(x=>x._id==id)).filter(Boolean).slice(0,10),r=$('#favRow');
-  r.classList.toggle('hide',!l.length);r.innerHTML=l.map(s=>`<span data-f="${s._id}">⭐ ${s.sid} ${esc(s.name.slice(0,22))}</span>`).join('');
+  r.classList.toggle('hide',!l.length);r.innerHTML=l.map(s=>`<span data-f="${s._id}">⭐ ${s.no||s.sid} ${esc(s.name.slice(0,22))}</span>`).join('');
   $$('#favRow [data-f]').forEach(e=>e.onclick=()=>{const s=S.svcs.find(x=>x._id==e.dataset.f);S.plat='all';rPlat();fillCats();$('#cat').value=s.category;fillSvcs();$('#svc').value=s._id;pick(s._id)});
   const on=S.cur&&fv.includes(S.cur._id),b=$('#favBtn');b.textContent=on?'★':'☆';b.classList.toggle('on',!!on);
 }
@@ -172,8 +173,8 @@ $('#lowGo').onclick=()=>{const c=S.cur?S.cur.rate*(+$('#qty').value||0)/1000*(1-
 $('#cat').onchange=fillSvcs;$('#svc').onchange=e=>pick(e.target.value);$('#qty').oninput=calc;
 $('#q').oninput=e=>{
   const v=e.target.value.trim().toLowerCase(),box=$('#sr');if(!v){box.classList.add('hide');return}
-  const r=S.svcs.filter(s=>String(s.sid)==v||String(s.sid).startsWith(v)||s.name.toLowerCase().includes(v)).slice(0,20);
-  box.innerHTML=r.map(s=>`<div data-id="${s._id}"><span class="idb">${s.sid}</span>${esc(s.name)}</div>`).join('')||'<div>কিছু পাওয়া যায়নি</div>';box.classList.remove('hide');
+  const r=S.svcs.filter(s=>String(s.no||'')==v||String(s.sid)==v||(/^\d+$/.test(v)&&String(s.no||'').startsWith(v))||s.name.toLowerCase().includes(v)).sort((a,b)=>(String(b.no||'')==v)-(String(a.no||'')==v)).slice(0,20);
+  box.innerHTML=r.map(s=>`<div data-id="${s._id}"><span class="idb">#${s.no||s.sid}</span>${esc(s.name)}</div>`).join('')||'<div>কিছু পাওয়া যায়নি</div>';box.classList.remove('hide');
   $$('#sr div[data-id]').forEach(d=>d.onclick=()=>{const s=S.svcs.find(x=>x._id==d.dataset.id);S.plat='all';rPlat();fillCats();$('#cat').value=s.category;fillSvcs();$('#svc').value=s._id;pick(s._id);box.classList.add('hide');$('#q').value=''});
 };
 $('#schOn').onchange=e=>{const i=$('#schAt');i.classList.toggle('hide',!e.target.checked);if(e.target.checked&&!i.value){const d=new Date(Date.now()+36e5);d.setMinutes(d.getMinutes()-d.getTimezoneOffset());i.value=d.toISOString().slice(0,16)}};
@@ -188,8 +189,9 @@ $('#order').onclick=async()=>{
   try{
     if($('#schOn').checked){
       const t=new Date($('#schAt').value).getTime();if(!t)throw new Error('সময় বেছে নিন');
-      const js=await api('/u/schedule',{serviceId:s._id,link,quantity:q,runAt:t/1000});if(js.error)throw new Error(js.error);
-      toast('⏰ অর্ডার শিডিউল হয়েছে','ok');$('#schOn').checked=false;$('#schAt').classList.add('hide');
+      const rp=$('#repOn')&&$('#repOn').checked;
+      const js=rp?await api('/u/schedule-rep',{serviceId:s._id,link,quantity:q,runAt:t/1000,days:+$('#repD').value||1,times:+$('#repT').value||2}):await api('/u/schedule',{serviceId:s._id,link,quantity:q,runAt:t/1000});if(js.error)throw new Error(js.error);
+      toast(rp?'🔁 রিপিট অর্ডার শিডিউল হয়েছে':'⏰ অর্ডার শিডিউল হয়েছে','ok');$('#schOn').checked=false;$('#schAt').classList.add('hide');
     }else{
       const jo=await api('/u/order',{serviceId:s._id,link,quantity:q});if(jo.error)throw new Error(jo.error);syncNow(true);
       toast('✅ অর্ডার সফল হয়েছে','ok');celebrate();
