@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1101b";window.__E=[];
+window.__V="v1102a";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -50,6 +50,45 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
 .lnk{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;color:var(--p)}
 .empty{text-align:center;color:var(--mu);padding:30px}
 @media(max-width:820px){aside{transform:translateX(-100%)}aside.open{transform:none}main{margin-left:0;padding:14px}.mb{display:flex}}
+
+/* ===== নতুন ডিজাইন (v1102) ===== */
+:root{--bg:#f3f6fc;--sh:0 1px 2px rgba(15,42,80,.05),0 6px 22px rgba(15,42,80,.06)}
+body{background:var(--bg)}
+aside{width:248px;background:linear-gradient(180deg,#0b1f3f,#112d57 60%,#0b1f3f);padding:16px 12px 30px;box-shadow:4px 0 24px rgba(11,31,63,.18)}
+aside h1{padding:8px 10px 16px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,.1)}
+aside h1 i{background:linear-gradient(135deg,#42a5f5,#1565c0);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px}
+aside .gl{font:700 10.5px Poppins;letter-spacing:.9px;text-transform:uppercase;color:#6f86a8;padding:14px 14px 5px}
+aside a{padding:10px 13px;font-size:14.5px;margin-bottom:2px;position:relative}
+aside a i{width:18px;text-align:center;font-size:14px;opacity:.9}
+aside a.on{background:linear-gradient(135deg,#2196f3,#1565c0);box-shadow:0 6px 16px rgba(33,150,243,.35)}
+main{margin-left:248px;padding:26px;max-width:1280px}
+.card{border:0;box-shadow:var(--sh);border-radius:18px;padding:20px}
+h2.t{font:700 21px Poppins;letter-spacing:-.2px}
+h2.t.sub{font:700 15.5px 'Hind Siliguri';margin-bottom:14px}
+.sc{box-shadow:0 8px 20px rgba(15,42,80,.14);border-radius:18px;position:relative;overflow:hidden}
+.sc:after{content:"";position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.14)}
+.btn{border-radius:12px;transition:transform .12s,box-shadow .2s;box-shadow:0 4px 12px rgba(33,150,243,.25)}.btn:active{transform:scale(.97)}
+.btn.gr,.btn.r,.btn.g{box-shadow:none}
+input,select,textarea{border-radius:12px}
+table{border-collapse:separate;border-spacing:0}tbody tr:hover td{background:#f7faff}
+th{background:#f7faff;position:sticky;top:0}
+.mu{color:var(--mu);display:block;font-size:12px;margin-top:4px;font-weight:400}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;margin-bottom:4px}
+.tabs button{flex:0 0 auto;border:1.5px solid var(--bd);background:#fff;border-radius:999px;padding:8px 16px;font:600 13.5px 'Hind Siliguri';color:var(--mu);cursor:pointer}
+.tabs button.on{background:var(--p);border-color:var(--p);color:#fff;box-shadow:0 5px 14px rgba(33,150,243,.3)}
+.lr{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;margin-bottom:8px;background:#f7faff;border-left:4px solid #94a3b8;font-size:13.5px}
+.lr.bad{border-left-color:var(--er);background:#fff5f5}.lr.warn{border-left-color:#f59e0b;background:#fffaf0}
+.lr code{display:block;font:12px/1.5 monospace;word-break:break-all;color:#475569;margin-top:3px;white-space:pre-wrap}
+.h3{font:700 14px 'Hind Siliguri';margin:14px 0 8px}
+.chip{display:inline-block;background:#e8f1fd;color:#1565c0;border-radius:999px;padding:3px 10px;font-size:12px;margin:3px 4px 0 0}
+label.ck{display:flex;gap:10px;align-items:flex-start;text-transform:none;font-size:14px;color:var(--tx);margin-top:12px;font-weight:500}
+label.ck input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}label.ck small{display:block;color:var(--mu);font-weight:400;font-size:12.5px}
+.nb{display:none}
+@media(max-width:820px){main{margin-left:0;padding:14px 12px 80px}aside{width:270px}.mb{background:linear-gradient(135deg,#0b1f3f,#1565c0);box-shadow:0 4px 14px rgba(11,31,63,.25)}
+ .nb{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);z-index:18;padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 20px rgba(15,42,80,.08)}
+ .nb a{flex:1;text-align:center;font:600 10.5px 'Hind Siliguri';color:var(--mu);padding:5px 2px;border-radius:10px;position:relative;cursor:pointer}.nb a i{display:block;font-size:18px;margin-bottom:2px}
+ .nb a.on{color:var(--p)}.nb a b{position:absolute;top:0;left:55%;background:#ef4444;color:#fff;border-radius:9px;font-size:9px;padding:0 5px}
+ .stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -68,19 +107,26 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
   <div class="mb"><i class="fa-solid fa-bars" id="mm" style="font-size:20px;cursor:pointer"></i><b>Admin Panel</b></div>
   <aside id="side">
     <h1><i class="fa-solid fa-shield-halved"></i><span id="brand">Admin</span></h1>
+    <div class="gl">মূল</div>
     <a data-v="dash" class="on"><i class="fa-solid fa-chart-pie"></i>ড্যাশবোর্ড</a>
     <a data-v="orders"><i class="fa-solid fa-file-lines"></i>অর্ডার<b id="cO" class="hide"></b></a>
     <a data-v="deps"><i class="fa-solid fa-money-bill-transfer"></i>ডিপোজিট<b id="cD" class="hide"></b></a>
     <a data-v="users"><i class="fa-solid fa-users"></i>ইউজার</a>
+    <div class="gl">সার্ভিস ও রিসেলার</div>
     <a data-v="svcs"><i class="fa-solid fa-layer-group"></i>সার্ভিস</a>
     <a data-v="prov"><i class="fa-solid fa-plug"></i>প্রোভাইডার API</a>
     <a data-v="rb"><i class="fa-solid fa-robot"></i>রিসেলার বট</a>
+    <div class="gl">সাপোর্ট</div>
     <a data-v="reqs"><i class="fa-solid fa-life-ring"></i>রিকোয়েস্ট<b id="cR" class="hide"></b></a>
     <a data-v="tix"><i class="fa-solid fa-ticket"></i>টিকেট<b id="cT" class="hide"></b></a>
-    <a data-v="tools"><i class="fa-solid fa-toolbox"></i>টুলস ও লগ</a>
+    <div class="gl">সিস্টেম</div>
+    <a data-v="feat"><i class="fa-solid fa-wand-magic-sparkles"></i>নতুন ফিচার সেটিং</a>
+    <a data-v="ops"><i class="fa-solid fa-user-shield"></i>সুরক্ষা ও লগ</a>
+    <a data-v="tools"><i class="fa-solid fa-toolbox"></i>টুলস</a>
     <a data-v="set"><i class="fa-solid fa-gear"></i>সেটিংস</a>
-    <a id="out" style="margin-top:20px"><i class="fa-solid fa-right-from-bracket"></i>লগআউট</a>
+    <a id="out" style="margin-top:16px;background:rgba(239,68,68,.12);color:#fca5a5"><i class="fa-solid fa-right-from-bracket"></i>লগআউট</a>
   </aside>
+  <nav class="nb"><a data-g="dash" class="on"><i class="fa-solid fa-chart-pie"></i>হোম</a><a data-g="orders"><i class="fa-solid fa-file-lines"></i>অর্ডার<b id="nO" class="hide"></b></a><a data-g="deps"><i class="fa-solid fa-money-bill-transfer"></i>ডিপোজিট<b id="nD" class="hide"></b></a><a data-g="users"><i class="fa-solid fa-users"></i>ইউজার</a><a data-g="more"><i class="fa-solid fa-ellipsis"></i>আরও</a></nav>
   <main>
     <section id="v-dash"></section>
     <section id="v-orders" class="hide"></section>
@@ -93,6 +139,8 @@ th{text-align:left;color:var(--mu);font-size:12px;text-transform:uppercase;paddi
     <section id="v-tix" class="hide"></section>
     <section id="v-tools" class="hide"></section>
     <section id="v-set" class="hide"></section>
+    <section id="v-feat" class="hide"></section>
+    <section id="v-ops" class="hide"></section>
   </main>
 </div>
 <div class="mo hide" id="mo"><div id="mc"></div></div>
@@ -215,15 +263,25 @@ onAuthStateChanged(auth,async u=>{
 
 /* NAV */
 let cur='dash';
-$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;if(cur=='tools')S._tl=false;S._setDirty=false;render();refresh()});
+$$('aside a[data-v]').forEach(a=>a.onclick=()=>{cur=a.dataset.v;$$('aside a').forEach(x=>x.classList.toggle('on',x==a));$$('.nb a[data-g]').forEach(x=>x.classList.toggle('on',x.dataset.g==cur));$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+cur).classList.remove('hide');$('#side').classList.remove('open');if(cur=='rb')S.rbStale=true;if(cur=='tools')S._tl=false;S._setDirty=false;render();refresh()});
 $('#mm').onclick=()=>$('#side').classList.toggle('open');
+$$('.nb a[data-g]').forEach(a=>a.onclick=()=>{if(a.dataset.g=='more')return $('#side').classList.toggle('open');const l=$(`aside a[data-v="${a.dataset.g}"]`);l&&l.click()});
 function badge(id,n){const e=$(id);e.textContent=n;e.classList.toggle('hide',!n)}
-function badges(){const t=S.st||{};badge('#cO',t.pending||0);badge('#cD',t.pdeps||0);badge('#cR',t.reqs||0);badge('#cT',t.tix||0)}
+function badges(){const t=S.st||{};badge('#nO',t.pending||0);badge('#nD',t.pdeps||0);badge('#cO',t.pending||0);badge('#cD',t.pdeps||0);badge('#cR',t.reqs||0);badge('#cT',t.tix||0)}
 function render(){
   $('#brand').textContent=S.set.siteName||'Admin';
   badges();
-  ({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,tools:rTools,set:rSet})[cur]();
+  (({dash:rDash,orders:rOrd,deps:rDep,users:rUsr,svcs:rSvc,prov:rProv,rb:rRb,reqs:rReq,tix:rTix,tools:rTools,set:rSet})[cur]||(window.__X&&window.__X[cur])||(()=>{}))();
 }
+
+const TT=[['🛡 অর্ডার ও সুরক্ষা',['🛡','🔥','⚙️']],['💳 পেমেন্ট',['💳']],['📣 মার্কেটিং',['📦','🎯','📢','🎟']],['🧰 সিস্টেম',['💾','📜']]];
+function toolTabs(){const r=$('#v-tools');if(!r||r.querySelector('.tabs'))return;const cards=[...r.querySelectorAll(':scope>.card')];
+  const grp=c=>{const h=c.querySelector('h2')?.textContent.trim()||'';const i=TT.findIndex(g=>g[1].some(e=>h.startsWith(e)));return i<0?TT.length-1:i};
+  const bar=document.createElement('div');bar.className='tabs';bar.innerHTML=TT.map((g,i)=>`<button data-t="${i}">${g[0]}</button>`).join('');
+  r.querySelector('h2.t').insertAdjacentElement('afterend',bar);
+  const show=i=>{S._tt=i;bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.t==i));cards.forEach(c=>c.classList.toggle('hide',grp(c)!=i))};
+  bar.onclick=e=>{const b=e.target.closest('button');if(b)show(+b.dataset.t)};show(S._tt||0)}
+window.__A={srv,toast,esc,tk,dbw,S};
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
 $('#mo').onclick=e=>{if(e.target.id=='mo')mclose()};
 const sel=(opts,v)=>opts.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('');
@@ -339,7 +397,7 @@ function rUsr(){
 
 /* TOOLS */
 function rTools(){
-  if(S._tl)return;S._tl=true;const s=S.set,LV=(s.levels&&s.levels.length?s.levels:[{name:'Starter'},{name:'Bronze'},{name:'Silver'},{name:'Gold'},{name:'Diamond'}]);
+  if(S._tl)return;S._tl=true;setTimeout(toolTabs,0);const s=S.set,LV=(s.levels&&s.levels.length?s.levels:[{name:'Starter'},{name:'Bronze'},{name:'Silver'},{name:'Gold'},{name:'Diamond'}]);
   $('#v-tools').innerHTML=`<h2 class="t">টুলস ও লগ</h2>
   <div class="card"><h2 class="t" style="font-size:16px">🛡 অর্ডার সুরক্ষা ও অ্যালার্ট</h2>
   <label style="display:flex;gap:8px;align-items:center;font-size:14px"><input type="checkbox" id="tDup" style="width:auto" ${s.dupBlock===false?'':'checked'}> একই লিংকে একই সার্ভিসের চলমান অর্ডার থাকলে নতুন অর্ডার আটকান</label>
@@ -568,5 +626,10 @@ function rSet(){
 }
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1101e</div></body>
+<script>
+(async function(){try{var r=await fetch("admin2.js?"+window.__V,{cache:"no-store"});if(!r.ok)throw 0;var t=await r.text();
+if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
+await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
+</script>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1102a</div></body>
 </html>
