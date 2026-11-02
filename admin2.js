@@ -28,9 +28,9 @@ window.__X.feat=function(){
   el.innerHTML=`<h2 class="t">✨ নতুন ফিচার সেটিং <button class="btn" id="fSave">💾 সব সেভ করুন</button></h2>
   <div class="card"><h2 class="t sub">🛡 অর্ডার সুরক্ষা</h2>
    ${ck('fRef',s.autoRefundFail!==false,'প্রোভাইডার রিজেক্ট করলে অটো রিফান্ড','প্রোভাইডার অর্ডার ফিরিয়ে দিলে ইউজার নিজে থেকে টাকা ফেরত পাবে')}
+   <small class="mu">ℹ️ একই লিংকে বারবার অর্ডার চলবে, তবে আগের অর্ডার শেষ না হলে নতুনটা যাবে না — এটা “টুলস → অর্ডার সুরক্ষা” এর প্রথম টিকবক্সে চালু/বন্ধ হয়।</small>
    ${ck('fLive',s.linkLive!==false,'লিংক জীবিত কিনা চেক','YouTube/TikTok ভিডিও লিংক মরা (ডিলিটেড) হলে অর্ডার আটকাবে। চেক না হলে অর্ডার যেতে দেয়')}
-   <div class="fg">${nm('fDup',s.dupHours??0,'একই লিংকে একই সার্ভিস আবার নিতে বাধা (ঘণ্টা)','০ = বন্ধ। যেমন ২৪ দিলে ২৪ ঘণ্টা আবার একই সার্ভিস একই লিংকে নেওয়া যাবে না (অন্য সার্ভিস যাবে)')}
-   ${nm('fNo',s.newUserOrders??3,'নতুন ইউজার (প্রথম কয়টা অর্ডার)','এই কয়টা অর্ডার পর্যন্ত নিচের সীমা খাটবে')}
+   <div class="fg">${nm('fNo',s.newUserOrders??3,'নতুন ইউজার (প্রথম কয়টা অর্ডার)','এই কয়টা অর্ডার পর্যন্ত নিচের সীমা খাটবে')}
    ${nm('fNc',s.newUserCap??0,'নতুন ইউজারের সর্বোচ্চ অর্ডার মূল্য (৳)','০ = সীমা নেই। বড় অর্ডার আটকে অ্যাডমিনকে জানায়','0.01')}</div></div>
   <div class="card"><h2 class="t sub">🔥 ফ্ল্যাশ সেল স্টক</h2><div class="fg">${nm('fFl',s.flashLeft,'ফ্ল্যাশ সেলে বাকি অর্ডার সংখ্যা','ফাঁকা = সীমাহীন। প্রতি অর্ডারে ১ কমে, ০ হলে ছাড় বন্ধ। ইউজার “শেষ N টা” দেখবে')}</div></div>
   <div class="card"><h2 class="t sub">💰 মাসিক ক্যাশব্যাক</h2><div class="fg">${nm('fCb',s.cashbackPct??0,'ক্যাশব্যাক (%)','০ = বন্ধ। প্রতি মাসের ১ তারিখে গত মাসের খরচের উপর','0.1')}${nm('fCm',s.cashbackMin??5000,'ন্যূনতম মাসিক খরচ (৳)','এর কম খরচ করলে ক্যাশব্যাক নেই')}</div></div>
@@ -40,7 +40,7 @@ window.__X.feat=function(){
    <label>কীওয়ার্ড না মিললে যে উত্তর যাবে ({ticketEta} ব্যবহার করা যায়)</label><input id="fEt" value="${esc(s.ticketEta||'')}" placeholder="যেমন: ২৪ ঘণ্টার মধ্যে উত্তর পাবেন"></div>
   <div class="card"><h2 class="t sub">📊 রিপোর্ট</h2>${ck('fDr',s.dailyReport!==false,'দৈনিক লাভ রিপোর্ট','প্রতিদিন রাত ১১:৫০ এ অ্যাডমিনদের টেলিগ্রামে আজকের বিক্রি, খরচ ও লাভ')}</div>`;
   $('#fSave').onclick=async()=>{const n=id=>{const v=$(id).value.trim();return v===''?null:+v};
-    const v={autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,dupHours:n('#fDup')||0,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
+    const v={autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
       transferOn:$('#fTr').checked,transferFeePct:n('#fTf')??2,transferMin:n('#fTm')??10,transferNeedDep:n('#fTd')??50,transferDailyMax:n('#fTx')??5000,faqAuto:$('#fFq').value.trim(),ticketEta:$('#fEt').value.trim(),dailyReport:$('#fDr').checked};
     try{await dbw('set','settings','main',v,true);Object.assign(S.set,v);toast('✅ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 };
