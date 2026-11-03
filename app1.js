@@ -1,4 +1,3 @@
-
 /* ============ 🔧 এখানে আপনার Firebase কনফিগ বসান ============ */
 const firebaseConfig = {
   apiKey: "AIzaSyAR8SaD21V3i5OMPP44KWejhlUHG5__QSA",
@@ -94,7 +93,7 @@ onAuthStateChanged(auth,u=>{window.__T=window.__T||[];window.__T.push('auth-cb:'
   S.unsub.forEach(f=>f());S.unsub=[];clearInterval(S._catT);clearInterval(S._pt);S._h='';
   if(!u)$('#load').classList.add('hide');else{S._booted=false;clearTimeout(S._bt);S._bt=setTimeout(()=>$('#load').classList.add('hide'),12000)}
   if(u&&TG&&TG.initData&&tgUser&&!S._fix){const ex=BOTID?`rb${BOTID}_${tgUser.id}`:`tg${tgUser.id}`;
-    if(u.uid!==ex&&(BOTID||/^(tg|rb)/.test(u.uid))){S._fix=true;S._tgTry=false;$('#load').classList.remove('hide');signOut(auth);return}}
+    if(u.uid!==ex){S._fix=true;S._tgTry=false;$('#load').classList.remove('hide');signOut(auth);return}}
   if(!u){S.uid=null;
     if(TG&&TG.initData&&!S._tgTry){S._tgTry=true;$('#load').classList.remove('hide');tgLogin().then(ok=>{if(!ok){$('#load').classList.add('hide');$('#app').classList.add('hide');$('#auth').classList.remove('hide')}});return}
     $('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
