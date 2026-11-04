@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1102a";window.__E=[];window.__X={};
+window.__V="v1104a";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -116,6 +116,7 @@ label.ck input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}label.ck smal
     <a data-v="svcs"><i class="fa-solid fa-layer-group"></i>সার্ভিস</a>
     <a data-v="prov"><i class="fa-solid fa-plug"></i>প্রোভাইডার API</a>
     <a data-v="rb"><i class="fa-solid fa-robot"></i>রিসেলার বট</a>
+    <a data-v="rbr"><i class="fa-solid fa-trophy"></i>রিসেলার র‍্যাংক</a>
     <div class="gl">সাপোর্ট</div>
     <a data-v="reqs"><i class="fa-solid fa-life-ring"></i>রিকোয়েস্ট<b id="cR" class="hide"></b></a>
     <a data-v="tix"><i class="fa-solid fa-ticket"></i>টিকেট<b id="cT" class="hide"></b></a>
@@ -140,6 +141,7 @@ label.ck input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}label.ck smal
     <section id="v-tools" class="hide"></section>
     <section id="v-set" class="hide"></section>
     <section id="v-feat" class="hide"></section>
+    <section id="v-rbr" class="hide"></section>
     <section id="v-ops" class="hide"></section>
   </main>
 </div>
@@ -631,5 +633,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1102a</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104a</div></body>
 </html>
