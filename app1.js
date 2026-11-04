@@ -1,3 +1,4 @@
+
 /* ============ 🔧 এখানে আপনার Firebase কনফিগ বসান ============ */
 const firebaseConfig = {
   apiKey: "AIzaSyAR8SaD21V3i5OMPP44KWejhlUHG5__QSA",
@@ -117,14 +118,19 @@ $('#bell').onclick=()=>toast(S.set.notice||'কোনো নতুন নোট�
 let bi=0,bt;
 function rBanner(){
   const imgs=(S.set.banners||[]).filter(Boolean);
-  let h=imgs.length?imgs.map(u=>`<div class="slide"><img src="${esc(u)}" alt=""></div>`).join(''):
+  const h=imgs.length?imgs.map(u=>`<div class="slide"><img src="${esc(u)}" alt=""></div>`).join(''):
   `<div class="slide"><h3>${esc(S.set.siteName||'SMM Panel')}</h3><p>এক প্যানেলে সবকিছু 🚀</p><ul><li>সহজে অর্ডার, দামে কম মানে সেরা</li><li>রিসেলারদের জন্য বেস্ট প্যানেল</li></ul></div>
    <div class="slide"><h3>দ্রুত ডেলিভারি ⚡</h3><p>২৪/৭ সাপোর্ট ও অটো সার্ভিস</p><ul><li>নিরাপদ পেমেন্ট</li><li>রেফার করে ইনকাম করুন</li></ul></div>`;
   const n=imgs.length||2;
-  $('#banner').innerHTML=h+`<div class="dots">${'<i></i>'.repeat(n)}</div>`;
-  clearInterval(bt);const sl=$$('.slide'),ds=$$('.dots i');
-  const show=()=>{sl.forEach((s,i)=>s.classList.toggle('on',i==bi%n));ds.forEach((d,i)=>d.classList.toggle('on',i==bi%n))};show();
-  bt=setInterval(()=>{bi++;show()},3800);
+  $('#banner').innerHTML=`<div class="btrack" id="bTrack">${h}</div><div class="bshine"></div><div class="dots">${'<i></i>'.repeat(n)}</div>`;
+  clearInterval(bt);const tr=$('#bTrack'),sl=$$('#banner .slide'),ds=$$('#banner .dots i');
+  const set=(i,anim)=>{bi=(i+n)%n;tr.style.transition=anim===false?'none':'';tr.style.transform=`translateX(${-bi*100}%)`;sl.forEach((s,k)=>s.classList.toggle('on',k==bi));ds.forEach((d,k)=>d.classList.toggle('on',k==bi))};
+  set(bi%n,false);
+  const auto=()=>{clearInterval(bt);bt=setInterval(()=>set(bi+1),4500)};auto();
+  let x0=0,dx=0,dr=false;const bn=$('#banner');
+  bn.ontouchstart=e=>{x0=e.touches[0].clientX;dx=0;dr=true;clearInterval(bt);tr.style.transition='none'};
+  bn.ontouchmove=e=>{if(!dr)return;dx=e.touches[0].clientX-x0;tr.style.transform=`translateX(calc(${-bi*100}% + ${dx}px))`};
+  bn.ontouchend=()=>{if(!dr)return;dr=false;tr.style.transition='';if(Math.abs(dx)>45)set(bi+(dx<0?1:-1));else set(bi);auto()};
 }
 
 /* platforms */
@@ -137,7 +143,8 @@ function fillCats(){
 }
 function fillSvcs(){
   const list=S.svcs.filter(s=>s.category==$('#cat').value&&(S.plat=='all'||s.platform==S.plat));
-  const fv=favs();list.sort((a,b)=>(fv.includes(b._id)-fv.includes(a._id)));
+  const fv=favs();if(S.sort=='lo')list.sort((a,b)=>a.rate-b.rate);else if(S.sort=='hi')list.sort((a,b)=>b.rate-a.rate);else if(S.sort=='no')list.sort((a,b)=>(a.no||a.sid)-(b.no||b.sid));
+  list.sort((a,b)=>(fv.includes(b._id)-fv.includes(a._id)));
   $('#svc').innerHTML=list.map(s=>`<option value="${s._id}">${fv.includes(s._id)?'⭐ ':''}${s.pop?'🔥 ':''}${s.isNew?'🆕 ':''}${s.sale?'💥 ':''}${s.no||s.sid} - ${esc(s.name)}</option>`).join('');
   pick($('#svc').value);
 }
