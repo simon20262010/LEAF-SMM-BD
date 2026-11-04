@@ -54,7 +54,7 @@ async function api(path,body){
 }
 const botRate=s=>{const B=S.bot||{},p=(B.prices||{})[s.sid];return p!=null&&!isNaN(+p)?Math.max(+s.rate,+p):+(s.rate*(1+(+B.margin||0)/100)+(+B.flat||0)).toFixed(4)};
 function applyPrices(){const t=S.bot&&S.bot.tenant;S.svcs=(S.raw||[]).map(s=>t?{...s,rate:botRate(s)}:s).sort((a,b)=>a.sid-b.sid);fillCats()}
-function mergeBot(){const B=S.bot;if(!B||!B.tenant)return;S.set={...S.set,methods:B.methods||[],supportLink:B.supportLink||'',siteName:B.siteName||S.set.siteName,notice:B.notice||'',banners:[],tutorialLink:''}}
+function mergeBot(){const B=S.bot;if(!B||!B.tenant)return;S.set={...S.set,methods:B.methods||[],supportLink:B.supportLink||'',siteName:B.siteName||S.set.siteName,notice:B.notice||'',banners:B.banners||[],tutorialLink:''}}
 async function loadBot(){
   try{const j=await api('/bot/config');if(j.error)return;S.bot=j;mergeBot();
     $('#mApi').classList.toggle('hide',!!j.tenant);
