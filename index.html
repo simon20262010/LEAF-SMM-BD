@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1103a";window.__E=[];
+window.__V="v1104a";window.__E=[];
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -11,7 +11,7 @@ l.innerHTML='<div style="padding:24px;text-align:center;font:14px/1.7 sans-serif
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>☘️ 𝗟𝗘𝗔𝗙 𝗦𝗠𝗠 𝗕𝗗 🇧🇩</title>
+<title>SMM Panel</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
@@ -223,7 +223,61 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
 #gate .gbtn{width:100%;border:0;border-radius:16px;padding:15px;margin-top:10px;background:#fff;color:#1565c0;font:700 16px 'Hind Siliguri';cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.2);transition:transform .15s}
 #gate .gbtn:active{transform:scale(.97)}#gate .gbtn:disabled{opacity:.7}
 #gate .gs{margin-top:16px;border:0;display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.16);color:#fff;border-radius:30px;padding:9px 16px;font:600 13px 'Hind Siliguri';cursor:pointer}
-.rxb{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:6px 10px;font:600 12px inherit;cursor:pointer}</style>
+.rxb{border:1px solid var(--bd);background:#fff;border-radius:10px;padding:6px 10px;font:600 12px inherit;cursor:pointer}/* ===== v1104: ব্যানার, থিম, ফ্রেম, স্কেলিটন, নতুন কার্ড ===== */
+.banner{background:linear-gradient(135deg,#1565c0,#2196f3 55%,#7c4dff);touch-action:pan-y;user-select:none}
+.banner .btrack{display:flex;height:100%;transition:transform .75s cubic-bezier(.65,0,.25,1);will-change:transform}
+.banner .slide{position:relative;inset:auto;flex:0 0 100%;opacity:1;transition:none;overflow:hidden}
+.banner .slide.on img{animation:none}
+.banner .slide:before{content:"";position:absolute;right:-40px;top:-50px;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.28),rgba(255,255,255,0) 70%);animation:bfl 7s ease-in-out infinite}
+.banner .slide:after{content:"";position:absolute;left:-30px;bottom:-60px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),rgba(255,255,255,0) 70%);animation:bfl 9s ease-in-out infinite reverse}
+.banner .slide img+*{display:none}
+.banner .slide>h3,.banner .slide>p,.banner .slide>ul li{opacity:0;transform:translateX(26px)}
+.banner .slide.on>h3{animation:bin .6s .15s cubic-bezier(.2,.8,.2,1) both}
+.banner .slide.on>p{animation:bin .6s .3s cubic-bezier(.2,.8,.2,1) both}
+.banner .slide.on>ul li{animation:bin .6s .45s cubic-bezier(.2,.8,.2,1) both}.banner .slide.on>ul li+li{animation-delay:.58s}
+@keyframes bin{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes bfl{50%{transform:translate(-14px,12px) scale(1.12)}}
+.banner .dots{z-index:3}.banner .dots i{transition:width .35s,background .35s}
+.banner .bshine{position:absolute;inset:0;background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.16) 50%,transparent 60%);transform:translateX(-120%);animation:bsh 6s 1s ease-in-out infinite;pointer-events:none;z-index:2}
+@keyframes bsh{60%,100%{transform:translateX(120%)}}
+/* থিম */
+html[data-th=green]{--p:#16a34a;--p2:#15803d;--hr:-75deg}html[data-th=purple]{--p:#7c3aed;--p2:#6d28d9;--hr:55deg}
+html[data-th=pink]{--p:#ec4899;--p2:#db2777;--hr:125deg}html[data-th=orange]{--p:#f97316;--p2:#ea580c;--hr:-170deg}html[data-th=teal]{--p:#0d9488;--p2:#0f766e;--hr:-35deg}
+html[data-th] .top,html[data-th] .banner,html[data-th] .bal,html[data-th] .btn:not([style*=background]),html[data-th] .mi .i,html[data-th] #gate:not(.lt),html[data-th] .gch .n{filter:hue-rotate(var(--hr))}
+.thg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.thg button{border:2px solid var(--bd);background:#fff;border-radius:16px;padding:12px 6px;font:600 13px inherit;color:var(--tx);cursor:pointer}
+.thg button i{display:block;width:34px;height:34px;border-radius:50%;margin:0 auto 6px;box-shadow:0 4px 10px rgba(0,0,0,.2)}.thg button.on{border-color:var(--p);box-shadow:0 0 0 3px rgba(30,136,229,.15)}
+/* অ্যাভাটার ফ্রেম */
+.av{position:relative;overflow:visible!important;display:grid;place-items:center;cursor:pointer}.av .ave{font-size:38px;line-height:1}
+.av:before{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(from 0deg,var(--f1,#22c55e),var(--f2,#86efac),var(--f1,#22c55e));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));animation:avs 5s linear infinite;pointer-events:none}
+.av:after{content:attr(data-lv);position:absolute;right:-8px;bottom:-6px;width:28px;height:28px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.av.fr1{--f1:#92400e;--f2:#f59e0b}.av.fr2{--f1:#64748b;--f2:#f1f5f9}.av.fr3{--f1:#f59e0b;--f2:#fef08a;filter:drop-shadow(0 0 8px rgba(251,191,36,.6))}.av.fr4{--f1:#22d3ee;--f2:#a78bfa;filter:drop-shadow(0 0 9px rgba(56,189,248,.7))}
+.av.fr4:before{animation-duration:2.6s}@keyframes avs{to{transform:rotate(360deg)}}
+.avp{text-align:center}.avp .pv{width:96px;height:96px;margin:6px auto 14px;font-size:50px}.avg{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:8px 0}.avg button{border:2px solid transparent;background:#f1f5f9;border-radius:12px;font-size:24px;padding:6px 0;cursor:pointer}.avg button.on{border-color:var(--p);background:#e8f1fd}
+.avc{display:flex;gap:8px;justify-content:center;margin:10px 0 14px}.avc i{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 2px #e2e8f0}.avc i.on{box-shadow:0 0 0 3px var(--p)}
+/* লেভেল ব্যাজ অ্যানিমেশন */
+.lvb.l0 svg{animation:lb0 3.2s ease-in-out infinite;transform-origin:50% 90%}@keyframes lb0{50%{transform:rotate(-8deg) translateY(-1px)}}
+.lvb.l1 svg{animation:lb1 2.8s ease-in-out infinite}@keyframes lb1{50%{transform:scale(1.1)}}
+.lvb.l2 svg{animation:lb2 3s ease-in-out infinite}@keyframes lb2{50%{transform:translateY(-2px)}}
+.lvb.l3{animation:lb3 2.2s ease-in-out infinite}@keyframes lb3{50%{filter:drop-shadow(0 0 9px rgba(251,191,36,1))}}
+.lvb.l4{animation:lb4 3.5s linear infinite}@keyframes lb4{0%,100%{filter:drop-shadow(0 0 5px rgba(56,189,248,.9))}50%{filter:drop-shadow(0 0 10px rgba(167,139,250,1))}}
+/* স্কেলিটন */
+.skl{background:linear-gradient(100deg,#e8eef7 30%,#f6f9fd 50%,#e8eef7 70%);background-size:300% 100%;animation:skl 1.3s linear infinite;border-radius:14px}@keyframes skl{to{background-position:-300% 0}}
+#olist:empty,#dHist:empty,#rList:empty{min-height:210px;background:repeating-linear-gradient(180deg,transparent 0 76px,#fff 76px 86px),linear-gradient(100deg,#e8eef7 30%,#f6f9fd 50%,#e8eef7 70%);background-size:100% 100%,300% 100%;animation:skl 1.3s linear infinite;border-radius:14px}
+#load .skw{position:absolute;left:0;right:0;top:0;padding:0}#load .skw .skl{margin:0 16px 14px}
+/* চ্যালেঞ্জ, সাজেশন কার্ড */
+.chal{background:linear-gradient(135deg,#7c3aed,#ec4899 70%,#f97316);color:#fff;border-radius:20px;padding:16px;margin-bottom:14px;box-shadow:0 10px 24px rgba(124,58,237,.3);position:relative;overflow:hidden}
+.chal:after{content:"🎯";position:absolute;right:10px;top:4px;font-size:64px;opacity:.16}
+.chal b.h{font:700 16px 'Hind Siliguri'}.chal .pr{height:10px;background:rgba(255,255,255,.28);border-radius:6px;margin:10px 0 6px;overflow:hidden}.chal .pr i{display:block;height:100%;background:#fde047;border-radius:6px;transition:width .8s}
+.chal small{opacity:.92}.chal button{margin-top:10px;width:100%;border:0;border-radius:12px;padding:11px;font:700 14px inherit;background:#fff;color:#7c3aed;cursor:pointer}.chal button:disabled{opacity:.7}
+.chal.done{background:linear-gradient(135deg,#059669,#10b981)}
+.sortsel{width:100%;margin:0 0 8px;font-size:13px;padding:8px 10px}
+.ai-card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:9px 10px;margin-top:8px;text-align:left;color:var(--tx)}.ai-card b{font-size:13px}.ai-card small{display:block;color:var(--mu);font-size:12px;margin-top:2px}
+.ai-card button{margin-top:6px;border:0;background:var(--p);color:#fff;border-radius:9px;padding:6px 12px;font:600 12px inherit;cursor:pointer}
+.payx{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.payx button{flex:1 1 auto;border:1.5px solid var(--p);background:#fff;color:var(--p);border-radius:12px;padding:9px 10px;font:600 13px inherit;cursor:pointer}
+.qrb{text-align:center;margin-top:10px}.qrb canvas,.qrb img{border:8px solid #fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-width:180px}
+.lnkh{font-size:12.5px;margin:-4px 0 10px;padding:8px 10px;border-radius:10px;background:#eef6ff;color:#0b3d91}.lnkh.w{background:#fff4e5;color:#92400e}.lnkh button{border:0;background:var(--p);color:#fff;border-radius:8px;padding:3px 10px;margin-left:6px;font:600 12px inherit;cursor:pointer}
+.rbk{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--bd);font-size:14px}.rbk.me{background:#eef6ff;border-radius:10px;padding:8px 10px;font-weight:700}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -239,7 +293,7 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
 <clipPath id="c4"><path d="M9 4h14l7 8-14 18L2 12Z"/></clipPath>
 </defs></svg>
 
-<div id="load"><div class="spin"></div></div>
+<div id="load"><div class="skw"><div class="skl" style="height:74px;border-radius:0 0 26px 26px;margin:0 0 16px"></div><div class="skl" style="height:150px;border-radius:22px"></div><div style="display:flex;gap:10px;margin:0 16px 14px"><div class="skl" style="height:54px;flex:1"></div><div class="skl" style="height:54px;flex:1"></div><div class="skl" style="height:54px;flex:1"></div><div class="skl" style="height:54px;flex:1"></div></div><div class="skl" style="height:48px"></div><div class="skl" style="height:48px"></div><div class="skl" style="height:120px"></div></div><div class="spin" style="position:relative"></div></div>
 <div class="toast" id="toast"></div>
 
 <!-- AUTH -->
@@ -396,7 +450,7 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
 <script>
 /* অ্যাপ কোড ৩টি ছোট ফাইলে (app1–4.js) — ফোন থেকে পেস্টে কেটে যাওয়া ঠেকাতে */
 (async function(){
-  var F=["app1.js","app2.js","app3.js","app4.js"],V=window.__V||"v",code="";
+  var F=["app1.js","app2.js","app3.js","app4.js","app5.js"],V=window.__V||"v",code="";
   function fail(m){var l=document.getElementById('load');if(l){l.classList.remove('hide');l.innerHTML='<div style="padding:24px;text-align:center;font:14px/1.7 sans-serif;color:#334155"><b>⚠️ '+m+'</b></div>'}window.__E.push(m)}
   try{
     var rs=await Promise.all(F.map(function(f){return fetch(new URL(f,location.href).href+"?"+V,{cache:"no-store"}).then(function(r){return r.ok?r.text():null}).catch(function(){return null})}));
@@ -410,5 +464,5 @@ html.dark{filter:invert(.92) hue-rotate(180deg);background:#fff}html.dark img,ht
   }catch(e){fail("অ্যাপ চালু হয়নি: "+String(e&&e.message||e).slice(0,120))}
 })();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1103a</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104a</div></body>
 </html>
