@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1104a";window.__E=[];window.__X={};
+window.__V="v1104d";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -519,7 +519,7 @@ async function srv(path,body,anon){
   const base=await botServer();
   if(!base)throw new Error('বট সার্ভারের ঠিকানা পাওয়া যায়নি');
   const h={'Content-Type':'application/json'};
-  if(!anon){const tok=await auth.currentUser.getIdToken();h.Authorization='Bearer '+tok}
+  if(!anon){try{await auth.authStateReady()}catch{}let u=auth.currentUser;for(let i=0;!u&&i<10;i++){await new Promise(r=>setTimeout(r,300));u=auth.currentUser}if(!u)throw new Error('লগইন সেশন শেষ — পেজ রিফ্রেশ করে আবার লগইন করুন');const tok=await u.getIdToken();h.Authorization='Bearer '+tok}
   const r=await fetch(base+path,{method:anon?'GET':'POST',headers:h,body:anon?undefined:JSON.stringify(body||{})});
   const j=await r.json().catch(()=>({error:'সার্ভারের উত্তর বোঝা যায়নি'}));
   if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;
@@ -633,5 +633,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104a</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104d</div></body>
 </html>
