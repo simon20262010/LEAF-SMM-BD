@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1104d";window.__E=[];window.__X={};
+window.__V="v1104e";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -612,12 +612,19 @@ function rSet(){
   <div class="card"><h2 class="t" style="font-size:17px">💲 রেট সেট করার নিয়ম (মূল বট)</h2>
   <p style="color:var(--mu);font-size:13px;line-height:1.7;margin-bottom:8px">প্রতি লাইনে একটি নিয়ম, রেট প্রতি ১০০০ এর জন্য। যেমন <b>0-3 = 12</b> লিখলে যেসব সার্ভিসের মূল রেট ০ থেকে ৩ টাকার মধ্যে সবগুলোর রেট ১২ টাকা হবে। <b>50+ = 100</b> মানে ৫০ বা তার বেশি হলে ১০০। কোনো নিয়মে না পড়লে রেট আগের মতোই থাকে। একাধিক নিয়ম মিললে ওপরেরটা চলে। লেখা খালি রেখে প্রয়োগ করলে সব রেট মূলে ফিরে যাবে।</p>
   <textarea id="rr" rows="6" placeholder="0-3 = 12&#10;3.01-10 = 25&#10;50+ = 100">${esc(s.rateRules||'')}</textarea>
-  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn gr s" id="rrD"><i class="fa-regular fa-eye"></i> কতটা বদলাবে দেখুন</button><button class="btn s" id="rrA"><i class="fa-solid fa-check"></i> প্রয়োগ করুন</button></div></div>
+  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn gr s" id="rrD"><i class="fa-regular fa-eye"></i> কতটা বদলাবে দেখুন</button><button class="btn s" id="rrA"><i class="fa-solid fa-check"></i> সেভ ও প্রয়োগ</button></div><div id="rrP"></div></div>
   <div class="card"><h2 class="t" style="font-size:17px">🔑 অ্যাডমিন পাসওয়ার্ড পরিবর্তন</h2><div class="fg"><div><label>বর্তমান পাসওয়ার্ড</label><input id="cp0" type="password"></div><div><label>নতুন পাসওয়ার্ড</label><input id="cp1" type="password"></div><div><label>নতুন পাসওয়ার্ড আবার</label><input id="cp2" type="password"></div></div><button class="btn" id="cpB" style="margin-top:14px">পাসওয়ার্ড বদলান</button></div>`;
   $('#cpB').onclick=async()=>{const a=$('#cp0').value,b=$('#cp1').value;if(b.length<6)return toast('নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর','er');if(b!==$('#cp2').value)return toast('নতুন পাসওয়ার্ড দুইবার মেলেনি','er');
     try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,a));await updatePassword(u,b);$('#cp0').value=$('#cp1').value=$('#cp2').value='';toast('পাসওয়ার্ড বদলানো হয়েছে','ok')}catch{toast('বর্তমান পাসওয়ার্ড ভুল','er')}};
-  const rr=async dry=>{try{const r=await srv('/adm/rates',{rules:$('#rr').value,dry});if(r.error)throw new Error(r.error);
-    if(dry)toast(`মোট ${r.total} টি সার্ভিসের মধ্যে ${r.changed} টির রেট বদলাবে`,'ok');else{toast(`✅ ${r.changed} টি সার্ভিসের রেট বদলেছে`,'ok');refresh()}}catch(e){toast(e.message,'er')}};
+  const rrEl=$('#rr'),DK='leafRrDraft';
+  {const d=lsGet(DK);if(d&&d!==(s.rateRules||''))rrEl.value=d;}
+  rrEl.oninput=()=>lsSet(DK,rrEl.value);
+  const pvH=(r,applied)=>{const L=r.list||[];return `<div style="margin-top:12px;font-weight:700">${applied?'✅ বদলেছে':'👁 দেখুন (এখনো সেভ হয়নি)'}: মোট ${r.total} টি সার্ভিসের মধ্যে <span style="color:var(--pr,#2563eb)">${r.changed} টির</span> রেট বদলাবে${r.changed>L.length?` (প্রথম ${L.length} টি দেখানো হলো)`:''}</div>
+    ${L.length?`<div style="max-height:320px;overflow:auto;margin-top:8px;border:1px solid var(--bd,#e2e8f0);border-radius:10px"><table style="width:100%;font-size:12px"><tr><th>ID</th><th style="text-align:left">সার্ভিস</th><th>মূল</th><th>এখন</th><th>নতুন</th></tr>${L.map(x=>`<tr><td>${x.sid??''}</td><td style="text-align:left">${esc(x.name)}</td><td>${x.base}</td><td>${x.old}</td><td><b style="color:${x.new>x.old?'#16a34a':x.new<x.old?'#dc2626':'inherit'}">${x.new}</b></td></tr>`).join('')}</table></div>`:''}
+    ${applied?'':'<div style="margin-top:8px;font-size:12px;color:var(--mu)">ঠিক থাকলে নিচের <b>সেভ ও প্রয়োগ</b> চাপুন। লেখা মুছবে না, পরে আবার বদলাতে পারবেন।</div>'}`};
+  const rr=async dry=>{const bt=$(dry?'#rrD':'#rrA');bt.disabled=true;try{const r=await srv('/adm/rates',{rules:rrEl.value,dry});if(r.error)throw new Error(r.error);
+    $('#rrP').innerHTML=pvH(r,!dry);
+    if(!dry){s.rateRules=rrEl.value;lsSet(DK,'');toast(`✅ ${r.changed} টি সার্ভিসের রেট বদলেছে`,'ok')}else toast(`${r.changed} টির রেট বদলাবে`,'ok')}catch(e){toast(e.message,'er')}bt.disabled=false};
   $('#rrD').onclick=()=>rr(true);
   $('#rrA').onclick=()=>{if(confirm('সব সার্ভিসে এই নিয়ম প্রয়োগ হবে। নিশ্চিত?'))rr(false)};
   $('#pmA').onclick=()=>$('#pmL').insertAdjacentHTML('beforeend',pmRow({}));
@@ -633,5 +640,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104d</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104e</div></body>
 </html>
