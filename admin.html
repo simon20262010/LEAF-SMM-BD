@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1104e";window.__E=[];window.__X={};
+window.__V="v1105a";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -485,11 +485,11 @@ function rTools(){
 }
 
 /* SERVICES */
-const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsapp','other'];
+const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsapp','other','code'];
 function rSvc(){
   const l=[...S.svcs].sort((a,b)=>a.sid-b.sid);
   $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button></h2><div class="card"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
-  ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">মূল ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
+  ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${s.platform=='code'?tk(s.rate/1000)+' <small>(ফিক্সড)</small>':tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">মূল ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
   $('#sn').onclick=()=>svcForm();
   $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));
   $$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>dbw('delete','services',b.dataset.d)));
@@ -499,10 +499,12 @@ function svcForm(s){
   mopen(`<h2 class="t">${n?'নতুন':'এডিট'} সার্ভিস</h2><div class="fg">
   <div><label>সার্ভিস ID</label><input id="f1" type="number" value="${s.sid}"></div><div><label>প্ল্যাটফর্ম</label><select id="f2">${sel(PL,s.platform)}</select></div></div>
   <label>ক্যাটাগরি</label><input id="f3" value="${esc(s.category)}" placeholder="Facebook - Followers [Fast]"><label>সার্ভিসের নাম</label><input id="f4" value="${esc(s.name)}">
-  <div class="fg"><div><label>রেট (প্রতি ১০০০, ৳)</label><input id="f5" type="number" step="0.01" value="${s.rate}"></div><div><label>Min</label><input id="f6" type="number" value="${s.min}"></div><div><label>Max</label><input id="f7" type="number" value="${s.max}"></div></div>
-  <label>গড় সময় (যেমন: ৪৬ মিনিট)</label><input id="f8" value="${esc(s.avgTime)}"><label>বিবরণ</label><textarea id="f9" rows="2">${esc(s.desc)}</textarea>
+  <div class="fg"><div><label id="f5l">রেট (প্রতি ১০০০, ৳)</label><input id="f5" type="number" step="0.01" value="${s.platform=='code'?s.rate/1000:s.rate}"></div><div><label>Min</label><input id="f6" type="number" value="${s.min}"></div><div><label>Max</label><input id="f7" type="number" value="${s.max}"></div></div>
+  <div id="imgW" class="hide"><label>🖼 উদাহরণ ছবির লিংক — ঐচ্ছিক (প্রতি লাইনে একটি, শুধু 💻 কোড সার্ভিসে)</label><textarea id="f11" rows="3" placeholder="https://.../demo1.jpg">${esc((s.imgs||[]).join('\n'))}</textarea></div><label>গড় সময় (যেমন: ৪৬ মিনিট)</label><input id="f8" value="${esc(s.avgTime)}"><label>বিবরণ</label><textarea id="f9" rows="2">${esc(s.desc)}</textarea>
   <label><input type="checkbox" id="f10" ${s.enabled?'checked':''} style="width:auto;margin-right:6px">চালু আছে</label><button class="btn full" id="fs">সেভ</button>`);
-  $('#fs').onclick=async()=>{const d={sid:+$('#f1').value,platform:$('#f2').value,category:$('#f3').value.trim(),name:$('#f4').value.trim(),rate:+$('#f5').value,min:+$('#f6').value,max:+$('#f7').value,avgTime:$('#f8').value.trim(),desc:$('#f9').value.trim(),enabled:$('#f10').checked};
+  const cdT=()=>{const c=$('#f2').value=='code';$('#f5l').textContent=c?'দাম (৳, প্রতি অর্ডারে একবার)':'রেট (প্রতি ১০০০, ৳)';if(c){$('#f6').value=1;$('#f7').value=1;$('#f6').readOnly=$('#f7').readOnly=true}else{$('#f6').readOnly=$('#f7').readOnly=false}$('#imgW').classList.toggle('hide',!c)};
+  $('#f2').onchange=cdT;cdT();
+  $('#fs').onclick=async()=>{const d={sid:+$('#f1').value,platform:$('#f2').value,category:$('#f3').value.trim(),name:$('#f4').value.trim(),rate:$('#f2').value=='code'?Math.round(+$('#f5').value*1000*100)/100:+$('#f5').value,min:+$('#f6').value,max:+$('#f7').value,avgTime:$('#f8').value.trim(),desc:$('#f9').value.trim(),enabled:$('#f10').checked,imgs:$('#f2').value=='code'?$('#f11').value.split('\n').map(x=>x.trim()).filter(x=>/^https?:\/\//i.test(x)).slice(0,8):[]};
     if(!d.category||!d.name||!d.rate||!d.min||!d.max||d.min>d.max)return toast('সব তথ্য সঠিকভাবে দিন','er');
     try{n?await dbw('add','services',null,d):await dbw('update','services',s._id,d);mclose();toast('সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
@@ -640,5 +642,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104e</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1105a</div></body>
 </html>
