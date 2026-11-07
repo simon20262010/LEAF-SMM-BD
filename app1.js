@@ -22,7 +22,7 @@ const fd=t=>t?.toDate?t.toDate().toLocaleString('en-GB',{day:'2-digit',month:'sh
 const fx=o=>{if(Array.isArray(o))return o.map(fx);if(o&&typeof o=='object'){if('__ts' in o){const s=o.__ts;return{seconds:s,toDate:()=>new Date(s*1000)}}const r={};for(const k in o)r[k]=fx(o[k]);return r}return o};
 function toast(m,t=''){const e=$('#toast');e.textContent=m;e.className='toast show '+t;clearTimeout(e._t);e._t=setTimeout(()=>e.className='toast',3200)}
 
-const PLATS=[['all','fa-solid fa-table-cells-large','#fff'],['facebook','fa-brands fa-facebook','#1877f2'],['instagram','fa-brands fa-instagram','#e1306c'],['youtube','fa-brands fa-youtube','#ff0000'],['tiktok','fa-brands fa-tiktok','#000'],['telegram','fa-brands fa-telegram','#2aabee'],['twitter','fa-brands fa-x-twitter','#000'],['whatsapp','fa-brands fa-whatsapp','#25d366'],['other','fa-solid fa-chart-simple','#f97316']];
+const PLATS=[['all','fa-solid fa-table-cells-large','#fff'],['facebook','fa-brands fa-facebook','#1877f2'],['instagram','fa-brands fa-instagram','#e1306c'],['youtube','fa-brands fa-youtube','#ff0000'],['tiktok','fa-brands fa-tiktok','#000'],['telegram','fa-brands fa-telegram','#2aabee'],['twitter','fa-brands fa-x-twitter','#000'],['whatsapp','fa-brands fa-whatsapp','#25d366'],['other','fa-solid fa-chart-simple','#f97316'],['code','fa-solid fa-code','#7c3aed']];
 const LEVELS_DEF=[['Starter',0,0],['Bronze',500,2],['Silver',2000,4],['Gold',5000,6],['Diamond',15000,10]];
 const SHP='M16 2 28 6V15C28 22 23 27 16 30 9 27 4 22 4 15V6Z';
 const LVSVG=[
@@ -136,13 +136,13 @@ function rBanner(){
 /* platforms */
 function rPlat(){$('#plat').innerHTML=PLATS.map(([k,ic,c])=>`<div data-k="${k}" class="${S.plat==k?'on':''}"><i class="${ic}" style="color:${S.plat==k?'#fff':(k=='all'?'#1e88e5':c)}"></i></div>`).join('');$$('#plat div').forEach(d=>d.onclick=()=>{S.plat=d.dataset.k;rPlat();fillCats()})}
 function fillCats(){
-  const list=S.svcs.filter(s=>S.plat=='all'||s.platform==S.plat);
+  const list=S.svcs.filter(s=>S.plat=='all'?s.platform!='code':s.platform==S.plat);
   const cats=[...new Set(list.map(s=>s.category))];
   $('#cat').innerHTML=cats.length?cats.map(c=>`<option>${esc(c)}</option>`).join(''):'<option value="">কোনো সার্ভিস নেই</option>';
   fillSvcs();
 }
 function fillSvcs(){
-  const list=S.svcs.filter(s=>s.category==$('#cat').value&&(S.plat=='all'||s.platform==S.plat));
+  const list=S.svcs.filter(s=>s.category==$('#cat').value&&(S.plat=='all'?s.platform!='code':s.platform==S.plat));
   const fv=favs();if(S.sort=='lo')list.sort((a,b)=>a.rate-b.rate);else if(S.sort=='hi')list.sort((a,b)=>b.rate-a.rate);else if(S.sort=='no')list.sort((a,b)=>(a.no||a.sid)-(b.no||b.sid));
   list.sort((a,b)=>(fv.includes(b._id)-fv.includes(a._id)));
   $('#svc').innerHTML=list.map(s=>`<option value="${s._id}">${fv.includes(s._id)?'⭐ ':''}${s.pop?'🔥 ':''}${s.isNew?'🆕 ':''}${s.sale?'💥 ':''}${s.no||s.sid} - ${esc(s.name)}</option>`).join('');
@@ -217,7 +217,7 @@ function rOrders(){
   $('#olist').innerHTML=l.map(o=>`<div class="oc"><div class="h"><div><small>#${o.sid}</small><h4>${esc(o.serviceName)}</h4></div><span class="st ${o.status}">${o.status}</span></div>
   <div style="font-size:12px;color:var(--mu);margin-top:8px"><i class="fa-regular fa-calendar"></i> ${fd(o.createdAt)}</div>
   <div class="meta"><span>QUANTITY<b>${o.quantity}</b></span><span>CHARGE<b>${tk(o.charge)}</b></span><span>ORDER ID<b>${o.orderNo}</b></span></div>
-  <div class="lk"><i class="fa-solid fa-link"></i> ${esc(o.link)}</div>${(o.status=='pending'||o.status=='processing')&&o.progress?`<div style="font-size:12px;margin-top:10px;display:flex;justify-content:space-between"><span>⏳ চলছে</span><b>${o.progress}%</b></div><div class="pbar" style="margin-top:4px"><i style="width:${o.progress}%"></i></div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="rbtn" data-ro="${o._id}"><i class="fa-solid fa-rotate-right"></i> আবার অর্ডার</button>${(o.status=='completed'||o.status=='partial')?(o.rated?`<span class="rbtn" style="background:#fff7e0;color:#d97706;cursor:default">★ ${o.rated}</span>`:`<button class="rbtn" style="background:#fff7e0;color:#d97706" data-rt="${o._id}">⭐ রেটিং দিন</button>`):''}${o.status=='pending'?`<button class="rbtn" style="background:#fee2e2;color:#dc2626" data-cx="${o._id}">বাতিলের অনুরোধ</button>`:''}</div>${o.note?`<div class="notice" style="margin:10px 0 0">${esc(o.note)}</div>`:''}</div>`).join('')||'<div class="empty"><i class="fa-solid fa-box-open"></i>কোনো অর্ডার নেই</div>';
+  <div class="lk"><i class="fa-solid ${o.digital?'fa-code':'fa-link'}"></i> ${esc(o.link)}</div>${(o.status=='pending'||o.status=='processing')&&o.progress?`<div style="font-size:12px;margin-top:10px;display:flex;justify-content:space-between"><span>⏳ চলছে</span><b>${o.progress}%</b></div><div class="pbar" style="margin-top:4px"><i style="width:${o.progress}%"></i></div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap">${o.digital?(o.nf?`<button class="rbtn" style="background:#ede9fe;color:#6d28d9" data-fr="${o._id}">📎 ফাইল আবার পাঠান (${o.nf})</button>`:''):`<button class="rbtn" data-ro="${o._id}"><i class="fa-solid fa-rotate-right"></i> আবার অর্ডার</button>`}${(o.status=='completed'||o.status=='partial')?(o.rated?`<span class="rbtn" style="background:#fff7e0;color:#d97706;cursor:default">★ ${o.rated}</span>`:`<button class="rbtn" style="background:#fff7e0;color:#d97706" data-rt="${o._id}">⭐ রেটিং দিন</button>`):''}${o.status=='pending'?`<button class="rbtn" style="background:#fee2e2;color:#dc2626" data-cx="${o._id}">বাতিলের অনুরোধ</button>`:''}</div>${o.note?`<div class="notice" style="margin:10px 0 0">${esc(o.note)}</div>`:''}</div>`).join('')||'<div class="empty"><i class="fa-solid fa-box-open"></i>কোনো অর্ডার নেই</div>';
 }
 $('#oq').oninput=rOrders;
 document.addEventListener('click',e=>{const b=e.target.closest('[data-ro]');if(!b)return;const o=S.orders.find(x=>x._id==b.dataset.ro),s=o&&S.svcs.find(x=>x._id==o.serviceId);
