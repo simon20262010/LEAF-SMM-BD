@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1104a";window.__E=[];
+window.__V="v1105a";window.__E=[];
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -450,7 +450,7 @@ html[data-th] .top,html[data-th] .banner,html[data-th] .bal,html[data-th] .btn:n
 <script>
 /* অ্যাপ কোড ৩টি ছোট ফাইলে (app1–4.js) — ফোন থেকে পেস্টে কেটে যাওয়া ঠেকাতে */
 (async function(){
-  var F=["app1.js","app2.js","app3.js","app4.js","app5.js"],V=window.__V||"v",code="";
+  var F=["app1.js","app2.js","app3.js","app4.js","app5.js","app6.js"],V=window.__V||"v",code="";
   function fail(m){var l=document.getElementById('load');if(l){l.classList.remove('hide');l.innerHTML='<div style="padding:24px;text-align:center;font:14px/1.7 sans-serif;color:#334155"><b>⚠️ '+m+'</b></div>'}window.__E.push(m)}
   try{
     var rs=await Promise.all(F.map(function(f){return fetch(new URL(f,location.href).href+"?"+V,{cache:"no-store"}).then(function(r){return r.ok?r.text():null}).catch(function(){return null})}));
@@ -464,5 +464,5 @@ html[data-th] .top,html[data-th] .banner,html[data-th] .bal,html[data-th] .btn:n
   }catch(e){fail("অ্যাপ চালু হয়নি: "+String(e&&e.message||e).slice(0,120))}
 })();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1104a</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1105a</div></body>
 </html>
