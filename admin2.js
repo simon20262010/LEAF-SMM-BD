@@ -51,6 +51,11 @@ window.__X.feat=function(){
    <div class="fg">${nm('fTf',s.transferFeePct??2,'ফি (%)','','0.1')}${nm('fTm',s.transferMin??10,'ন্যূনতম পরিমাণ (৳)')}${nm('fTd',s.transferNeedDep??50,'পাঠাতে মোট ডিপোজিট লাগবে (৳)','ফ্রড ঠেকাতে')}${nm('fTx',s.transferDailyMax??5000,'দৈনিক সর্বোচ্চ (৳)')}</div></div>
   <div class="card"><h2 class="t sub">🎫 টিকেট অটো-রিপ্লাই</h2><label>অটো উত্তর (প্রতি লাইনে: কীওয়ার্ড১,কীওয়ার্ড২|উত্তর)</label><textarea id="fFq" rows="5" placeholder="refund,টাকা ফেরত|রিফান্ড ২৪ ঘণ্টার মধ্যে ব্যালেন্সে যোগ হয়।&#10;slow,দেরি|অর্ডার শুরু হতে ১-২ ঘণ্টা লাগতে পারে।">${esc(s.faqAuto||'')}</textarea>
    <label>কীওয়ার্ড না মিললে যে উত্তর যাবে ({ticketEta} ব্যবহার করা যায়)</label><input id="fEt" value="${esc(s.ticketEta||'')}" placeholder="যেমন: ২৪ ঘণ্টার মধ্যে উত্তর পাবেন"></div>
+  <div class="card"><h2 class="t sub">🚨 অটো ডিপোজিট সুরক্ষা</h2>
+   ${ck('fSs',s.smsStrict!==false,'শুধু অফিসিয়াল প্রেরকের SMS নিন (খুব জরুরি)','যে কেউ আপনার নাম্বারে “You have received Tk…” লিখে SMS পাঠিয়ে ভুয়া পেমেন্ট বানাতে পারে। এটা চালু থাকলে শুধু bKash/Nagad/Rocket/Upay প্রেরকের SMS গ্রহণ হবে। ফরওয়ার্ডারের Payload-এ <code>"from":"%from%"</code> থাকতে হবে।')}
+   <div><label>অনুমোদিত প্রেরকের নাম (কমা দিয়ে)</label><input id="fSn" value="${esc(s.smsSenders||'bkash,nagad,rocket,upay,16216,16167,26969')}"></div>
+   ${nm('fAm',s.autoMax,'অটো অ্যাপ্রুভের সর্বোচ্চ টাকা','এর বেশি টাকার ডিপোজিট অটো হবে না, আপনি ম্যানুয়াল অ্যাপ্রুভ করবেন। ফাঁকা বা ০ = সীমা নেই')}
+  </div>
   <div class="card"><h2 class="t sub">⚡ bKash অটো গেটওয়ে (মার্চেন্ট API)</h2>${ck('fBk',!!s.bkAutoOn,'অটো ডিপোজিট চালু','ডিপোজিট পেজে “⚡ অটো” ও “✋ ম্যানুয়াল” দুটো ট্যাব থাকবে। আগে নিচের তথ্য সেভ করে “সংযোগ টেস্ট” দিন')}
    <label>মোড</label><select id="fBm"><option value="sandbox" ${(s.bkGw||{}).mode!='live'?'selected':''}>Sandbox (টেস্ট, আসল টাকা কাটে না)</option><option value="live" ${(s.bkGw||{}).mode=='live'?'selected':''}>Live (আসল)</option></select>
    <div class="fg"><div><label>App Key</label><input id="fBa" value="${esc((s.bkGw||{}).appKey||'')}"></div><div><label>App Secret</label><input id="fBs" type="password" value="${esc((s.bkGw||{}).appSecret||'')}"></div>
@@ -67,7 +72,7 @@ window.__X.feat=function(){
   $('#fBt').onclick=async()=>{try{const r=await A().srv('/adm/bb-test',{});toast(r.error||'✅ পোস্ট হয়েছে','ok')}catch(e){toast(e.message,'er')}};
   $('#fBtest').onclick=async()=>{const b=$('#fBres');b.textContent='টেস্ট হচ্ছে... (আগে “সব সেভ করুন” চেপে নিন)';try{const r=await A().srv('/adm/bk-test',{});b.innerHTML=r.error?'❌ '+esc(r.error):'✅ সংযোগ ঠিক আছে ('+esc(r.mode)+')<br>bKash কে এই Callback URL দিন: <b style="word-break:break-all">'+esc(r.callback)+'</b>'}catch(e){b.textContent='❌ '+e.message}};
   $('#fSave').onclick=async()=>{const n=id=>{const v=$(id).value.trim();return v===''?null:+v};
-    const v={autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
+    const v={smsStrict:$('#fSs').checked,smsSenders:$('#fSn').value.trim(),autoMax:n('#fAm')||0,autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
       transferOn:$('#fTr').checked,transferFeePct:n('#fTf')??2,transferMin:n('#fTm')??10,transferNeedDep:n('#fTd')??50,transferDailyMax:n('#fTx')??5000,faqAuto:$('#fFq').value.trim(),ticketEta:$('#fEt').value.trim(),dailyReport:$('#fDr').checked,chalOn:$('#fCh').checked,chalOrders:n('#fCo')??5,chalPrize:n('#fCp')??10,bestBuyerOn:$('#fBb').checked,bestBuyerChat:$('#fBc').value.trim(),doneCard:$('#fDc').checked,bkAutoOn:$('#fBk').checked,bkGw:{mode:$('#fBm').value,appKey:$('#fBa').value.trim(),appSecret:$('#fBs').value.trim(),user:$('#fBu').value.trim(),pass:$('#fBp').value.trim(),max:n('#fBx')||30000}};
     try{await dbw('set','settings','main',v,true);Object.assign(S.set,v);toast('✅ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 };
