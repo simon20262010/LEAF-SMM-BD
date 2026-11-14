@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1105c";window.__E=[];window.__X={};
+window.__V="v1106a";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -488,9 +488,11 @@ function rTools(){
 const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsapp','other','code'];
 function rSvc(){
   const l=[...S.svcs].sort((a,b)=>a.sid-b.sid);
-  $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button></h2><div class="card"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
+  $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button> <button class="btn r" id="swp">🗑 সব সার্ভিস মুছুন</button></h2><div class="card"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
   ${l.map(s=>`<tr><td>${s.sid}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}</td><td>${s.platform=='code'?tk(s.rate/1000)+' <small>(ফিক্সড)</small>':tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">মূল ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=8 class="empty">কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন</td></tr>'}</table></div></div>`;
   $('#sn').onclick=()=>svcForm();
+  $('#swp').onclick=async()=>{try{const d=await srv('/adm/svc-wipe',{dry:true});if(d.error)return toast(d.error,'er');if(!confirm('⚠️ '+d.delete+' টি সার্ভিস মুছে যাবে (ওয়েবসাইট কোড '+d.keep+' টি থাকবে)। এটা ফেরানো যায় না। চালিয়ে যাবেন?'))return;const t=prompt('নিশ্চিত করতে বড় হাতের অক্ষরে DELETE লিখুন');if(t!=='DELETE')return toast('বাতিল','er');const r=await srv('/adm/svc-wipe',{confirm:'DELETE'});r.error?toast(r.error,'er'):(toast('✅ '+r.deleted+' টি মুছেছে','ok'),refresh())}catch(e){toast(e.message,'er')}};
+
   $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));
   $$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>dbw('delete','services',b.dataset.d)));
 }
@@ -535,11 +537,12 @@ function rProv(){
   $('#v-prov').innerHTML=`<h2 class="t">প্রোভাইডার API<button class="btn" id="pn"><i class="fa-solid fa-plus"></i> নতুন প্রোভাইডার</button></h2><div class="card"><p style="color:var(--mu);font-size:13px;margin-bottom:12px">অন্য প্যানেলের API যুক্ত করুন। "সার্ভিস ইমপোর্ট" চাপলে সার্ভিস আসবে (রেটের সাথে মার্কআপ যোগ হবে) এবং ওই সার্ভিসের অর্ডার নিজে থেকে প্রোভাইডারে চলে যাবে। প্রোভাইডারের কী/রেট ইউজাররা দেখতে পায় না।</p>
   <div class="tw"><table><tr><th>নাম</th><th>API URL</th><th>কী</th><th>মার্কআপ %</th><th>রেট গুণক</th><th>সার্ভিস</th><th></th></tr>
   ${l.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td><span class="lnk">${esc(p.url)}</span></td><td>${esc((p.key||'').slice(0,4))}••••</td><td>${p.markup||0}%</td><td>${p.fx||1}</td><td>${S.svcs.filter(s=>s.prov==p._id).length}</td>
-  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
+  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" style="background:#0ea5e9;color:#fff" data-pm="${p._id}">🔄 মিরর সিংক</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
   $('#pn').onclick=()=>provForm();
   $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
   $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>dbw('delete','providers',b.dataset.pd)));
   $$('[data-pb]').forEach(b=>b.onclick=async()=>{toast('চেক করা হচ্ছে...');try{const r=await srv('/admin/provider/balance',{id:b.dataset.pb});r.error?toast(r.error,'er'):toast('প্রোভাইডার ব্যালেন্স: '+r.balance+' '+(r.currency||''),'ok')}catch(e){toast(e.message,'er')}});
+  $$('[data-pm]').forEach(b=>b.onclick=async()=>{toast('যাচাই হচ্ছে, অপেক্ষা করুন...');try{const d=await srv('/adm/prov-mirror',{id:b.dataset.pm,dry:true});if(d.error)return toast(d.error,'er');if(!confirm('🔄 মিরর সিংক\n\n🗑 মুছবে: '+d.delete+' (প্রোভাইডারে নেই '+d.delete_gone+', হুবহু ডুপ্লিকেট '+d.delete_dup+')\n➕ নতুন আসবে: '+d.add+'\n🔢 সার্ভিস আইডি প্রোভাইডারের আইডির সমান হবে: '+d.idfix+' টির বদলাবে\n⏱ গড় সময় প্রোভাইডার থেকে আসবে\n\n'+(d.sample_del.length?'মোছা হবে যেমন: '+d.sample_del.join(', ')+'\n':'')+'ওয়েবসাইট কোড সার্ভিস ও অন্য প্রোভাইডারের সার্ভিস ছোঁবে না। চালাবেন?'))return;toast('সিংক হচ্ছে...');const r=await srv('/adm/prov-mirror',{id:b.dataset.pm});r.error?toast(r.error,'er'):(toast('✅ মুছেছে '+r.delete+' • যোগ '+r.add+' • আইডি ঠিক '+r.idfix,'ok'),refresh())}catch(e){toast(e.message,'er')}});
   $$('[data-pi]').forEach(b=>b.onclick=async()=>{if(!confirm('শুধু নতুন সার্ভিসগুলো আসবে। যেগুলো আপনার কাছে আগে থেকেই আছে সেগুলো আর আসবে না, তাদের রেট বদলাবে না। চালিয়ে যাবেন?'))return;toast('ইমপোর্ট হচ্ছে, একটু অপেক্ষা করুন...');try{const r=await srv('/admin/provider/import',{id:b.dataset.pi});r.error?toast(r.error,'er'):toast('✅ নতুন '+r.added+' টি এসেছে • আগে থেকেই ছিল '+(r.skipped||0)+' টি (বাদ)','ok')}catch(e){toast(e.message,'er')}});
 }
 function provForm(p){
@@ -642,5 +645,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1105c</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1106a</div></body>
 </html>
