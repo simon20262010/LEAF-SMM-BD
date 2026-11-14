@@ -119,8 +119,10 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
     <input id="apCh" placeholder="@my_channel_username" style="margin-top:6px"><div style="display:flex;gap:8px;margin-top:6px"><input id="apMn" type="number" placeholder="Min ভিউ (${j.vlimit[0]}+)"><input id="apMx" type="number" placeholder="Max ভিউ (${j.vlimit[1]} পর্যন্ত)"></div>
     ${j.rrate?`<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="apRe"> 👍 রিয়্যাকশনও চাই (${j.rmin}-${j.rmax} টা প্রতি পোস্টে)</label>`:''}
     <small style="color:var(--mu);display:block;margin-top:6px">দাম: ভিউ ${tk(j.vrate)}/১০০০${j.rrate?' • রিয়্যাকশন '+tk(j.rrate)+'/১০০০':''}</small>
-    <button class="btn" id="apGo" style="margin-top:8px">চ্যানেল ভেরিফাই ও সেভ করুন</button></div>`:'<div class="pc" style="margin-top:8px">এই সার্ভিস এখন বন্ধ আছে।</div>'}
+    <button class="btn" id="apGo" style="margin-top:8px">চ্যানেল ভেরিফাই ও সেভ করুন</button></div>`:'<div class="pc" style="margin-top:8px">এই সার্ভিস এখন বন্ধ আছে।'+(j.why?'<br><small style="color:var(--mu)">কারণ: '+esc(j.why)+'</small>':'')+'</div>'}
     <div class="sec" style="margin-top:12px"><i class="fa-solid fa-list"></i>সংরক্ষিত চ্যানেলসমূহ (${(j.rows||[]).length})</div>${rows||'<div class="empty">কোনো চ্যানেল নেই</div>'}`);
+    const gb=$('#gBody');gb.style.cssText='height:100vh;max-height:100vh;border-radius:0;max-width:none;padding:18px 16px 90px';$('#gModal').style.alignItems='stretch';
+    const gx=$('#gX');if(gx){const o=gx.onclick;gx.onclick=()=>{gb.style.cssText='';$('#gModal').style.alignItems='';o()}}
     const cp=$('#apCp');if(cp)cp.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText('@'+j.botUser);toast('কপি হয়েছে','ok')};
     const go=$('#apGo');if(go)go.onclick=async()=>{go.disabled=true;const r=await api('/u/ap-add',{chan:$('#apCh').value,vmin:$('#apMn').value,vmax:$('#apMx').value,react:$('#apRe')?$('#apRe').checked:false}).catch(e=>({error:'নেটওয়ার্ক সমস্যা'}));go.disabled=false;if(r.error)return toast(r.error,'er');toast('✅ চ্যানেল যুক্ত হয়েছে','ok');j.rows=r.rows;draw(j)};
     $$('[data-ap]').forEach(b=>b.onclick=async()=>{if(b.dataset.ap=='del'&&!confirm('চ্যানেলটি মুছবেন?'))return;const r=await api('/u/ap-act',{id:b.dataset.id,op:b.dataset.ap});if(r.error)return toast(r.error,'er');j.rows=r.rows;draw(j)});
