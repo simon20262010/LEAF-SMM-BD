@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1106c";window.__E=[];window.__X={};
+window.__V="v1106d";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -283,7 +283,7 @@ function toolTabs(){const r=$('#v-tools');if(!r||r.querySelector('.tabs'))return
   r.querySelector('h2.t').insertAdjacentElement('afterend',bar);
   const show=i=>{S._tt=i;bar.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.t==i));cards.forEach(c=>c.classList.toggle('hide',grp(c)!=i))};
   bar.onclick=e=>{const b=e.target.closest('button');if(b)show(+b.dataset.t)};show(S._tt||0)}
-window.__A={srv,toast,esc,tk,dbw,S};
+window.__A={srv,toast,esc,tk,dbw,S,runJob};
 const mopen=h=>{$('#mc').innerHTML=h;$('#mo').classList.remove('hide')},mclose=()=>$('#mo').classList.add('hide');
 $('#mo').onclick=e=>{if(e.target.id=='mo')mclose()};
 const sel=(opts,v)=>opts.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('');
@@ -529,6 +529,22 @@ async function srv(path,body,anon){
   if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;
   return j;
 }
+async function runJob(kind,id,title,extra){
+  let o=document.getElementById('jobOv');if(o)o.remove();
+  o=document.createElement('div');o.id='jobOv';o.style.cssText='position:fixed;inset:0;background:rgba(10,20,40,.6);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML='<div style="background:#fff;color:#0f172a;border-radius:16px;padding:20px;width:100%;max-width:380px"><b id="jbT"></b><div style="height:14px;background:#e2e8f0;border-radius:9px;margin:14px 0 6px;overflow:hidden"><div id="jbB" style="height:100%;width:0;background:linear-gradient(90deg,#1e88e5,#22c55e);transition:width .5s"></div></div><div style="display:flex;justify-content:space-between;font-size:13px"><span id="jbX" style="flex:1;padding-right:8px">শুরু হচ্ছে...</span><b id="jbP">0%</b></div><div style="font-size:11px;color:#64748b;margin-top:8px">পেজ বন্ধ করবেন না। কাজ সার্ভারে চলছে।</div></div>';
+  document.body.appendChild(o);document.getElementById('jbT').textContent=title;
+  try{
+    const s=await srv('/adm/job-start',Object.assign({kind,id},extra||{}));if(s.error)throw new Error(s.error);
+    for(let miss=0;;){
+      await new Promise(r=>setTimeout(r,900));
+      let j;try{j=await srv('/adm/job',{jid:s.jid})}catch(e){if(++miss>20)throw e;continue}
+      if(j.error&&!j.pct&&!j.done)throw new Error(j.error);
+      document.getElementById('jbB').style.width=j.pct+'%';document.getElementById('jbP').textContent=j.pct+'%';document.getElementById('jbX').textContent=j.text||'';
+      if(j.done){o.remove();if(j.error)throw new Error(j.error);return j.result||{}}
+    }
+  }catch(e){const x=document.getElementById('jobOv');if(x)x.remove();throw e}
+}
 async function dbw(op,c,id,data,merge){const r=await srv('/adm/doc',{op,c,id,data,merge});if(r.error)throw new Error(r.error);refresh();return r}
 
 /* PROVIDERS */
@@ -542,8 +558,8 @@ function rProv(){
   $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
   $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>dbw('delete','providers',b.dataset.pd)));
   $$('[data-pb]').forEach(b=>b.onclick=async()=>{toast('চেক করা হচ্ছে...');try{const r=await srv('/admin/provider/balance',{id:b.dataset.pb});r.error?toast(r.error,'er'):toast('প্রোভাইডার ব্যালেন্স: '+r.balance+' '+(r.currency||''),'ok')}catch(e){toast(e.message,'er')}});
-  $$('[data-pm]').forEach(b=>b.onclick=async()=>{toast('যাচাই হচ্ছে, অপেক্ষা করুন...');try{const d=await srv('/adm/prov-mirror',{id:b.dataset.pm,dry:true});if(d.error)return toast(d.error,'er');if(!confirm('🔄 মিরর সিংক\n\n🗑 মুছবে: '+d.delete+' (প্রোভাইডারে নেই '+d.delete_gone+', হুবহু ডুপ্লিকেট '+d.delete_dup+')\n➕ নতুন আসবে: '+d.add+'\n🔢 সার্ভিস আইডি প্রোভাইডারের আইডির সমান হবে: '+d.idfix+' টির বদলাবে\n⏱ গড় সময় পাওয়া গেছে: '+d.avg_found+'/'+d.total_provider+' টিতে\nপ্রোভাইডার যে ফিল্ড পাঠায়: '+d.keys.join(', ')+'\n\n'+(d.sample_del.length?'মোছা হবে যেমন: '+d.sample_del.join(', ')+'\n':'')+'ওয়েবসাইট কোড সার্ভিস ও অন্য প্রোভাইডারের সার্ভিস ছোঁবে না। চালাবেন?'))return;toast('সিংক হচ্ছে...');const r=await srv('/adm/prov-mirror',{id:b.dataset.pm});r.error?toast(r.error,'er'):(toast('✅ মুছেছে '+r.delete+' • যোগ '+r.add+' • আইডি ঠিক '+r.idfix,'ok'),refresh())}catch(e){toast(e.message,'er')}});
-  $$('[data-pi]').forEach(b=>b.onclick=async()=>{if(!confirm('শুধু নতুন সার্ভিসগুলো আসবে। যেগুলো আপনার কাছে আগে থেকেই আছে সেগুলো আর আসবে না, তাদের রেট বদলাবে না। চালিয়ে যাবেন?'))return;toast('ইমপোর্ট হচ্ছে, একটু অপেক্ষা করুন...');try{const r=await srv('/admin/provider/import',{id:b.dataset.pi});r.error?toast(r.error,'er'):toast('✅ নতুন '+r.added+' টি এসেছে • আগে থেকেই ছিল '+(r.skipped||0)+' টি (বাদ)','ok')}catch(e){toast(e.message,'er')}});
+  $$('[data-pm]').forEach(b=>b.onclick=async()=>{try{const d=await runJob('mirror',b.dataset.pm,'🔄 যাচাই হচ্ছে',{dry:true});if(!confirm('🔄 মিরর সিংক\n\n🗑 মুছবে: '+d.delete+' (প্রোভাইডারে নেই '+d.delete_gone+', হুবহু ডুপ্লিকেট '+d.delete_dup+')\n➕ নতুন আসবে: '+d.add+'\n🔢 সার্ভিস আইডি প্রোভাইডারের আইডির সমান হবে: '+d.idfix+' টির বদলাবে\n⏱ গড় সময় পাওয়া গেছে: '+d.avg_found+'/'+d.total_provider+' টিতে\nপ্রোভাইডার যে ফিল্ড পাঠায়: '+d.keys.join(', ')+'\n\n'+(d.sample_del.length?'মোছা হবে যেমন: '+d.sample_del.join(', ')+'\n':'')+'ওয়েবসাইট কোড সার্ভিস ও অন্য প্রোভাইডারের সার্ভিস ছোঁবে না। চালাবেন?'))return;const r=await runJob('mirror',b.dataset.pm,'🔄 মিরর সিংক চলছে');toast('✅ মুছেছে '+r.delete+' • যোগ '+r.add+' • আইডি ঠিক '+r.idfix,'ok');refresh()}catch(e){toast(e.message,'er')}});
+  $$('[data-pi]').forEach(b=>b.onclick=async()=>{if(!confirm('শুধু নতুন সার্ভিসগুলো আসবে। যেগুলো আপনার কাছে আগে থেকেই আছে সেগুলো আর আসবে না, তাদের রেট বদলাবে না। চালিয়ে যাবেন?'))return;try{const r=await runJob('import',b.dataset.pi,'⬇️ সার্ভিস ইমপোর্ট চলছে');toast('✅ নতুন '+r.added+' টি এসেছে • আগে থেকেই ছিল '+(r.skipped||0)+' টি (বাদ)','ok');refresh()}catch(e){toast(e.message,'er')}});
 }
 function provForm(p){
   const n=!p;p=p||{name:'',url:'',key:'',markup:0,fx:1};
@@ -645,5 +661,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1106c</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1106d</div></body>
 </html>
