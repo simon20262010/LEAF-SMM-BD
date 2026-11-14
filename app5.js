@@ -65,10 +65,10 @@ const _PAYAPP=[[/bkash|বিকাশ/i,'com.bKash.customerapp','*247#'],[/naga
 function payExtra(){
   const h=$('#how');if(!h||h.querySelector('#payX')||S.pm==null)return;const x=(S.set.methods||[])[S.pm];if(!x)return;
   const ap=_PAYAPP.find(a=>a[0].test(x.name)),w=document.createElement('div');w.id='payX';
-  w.innerHTML=`<div class="payx"><button id="pxCp">📋 নাম্বার কপি</button>${ap?`<button id="pxOp">📱 ${esc(x.name)} অ্যাপ খুলুন</button><button id="pxDl">☎️ ${esc(ap[2])} ডায়াল</button>`:''}<button id="pxQr">🔳 QR কোড</button></div><div class="qrb hide" id="pxQb"></div>`;
+  w.innerHTML=`<div class="payx"><button id="pxCp">📋 নাম্বার কপি</button>${ap?`<button id="pxDl">☎️ ${esc(ap[2])} ডায়াল</button>`:''}<button id="pxQr">🔳 QR কোড</button></div><div class="qrb hide" id="pxQb"></div>`;
   h.appendChild(w);
   $('#pxCp').onclick=async()=>{try{await navigator.clipboard.writeText(x.number);toast('নাম্বার কপি হয়েছে ✅','ok')}catch{prompt('কপি করুন:',x.number)}};
-  if(ap){$('#pxOp').onclick=()=>{toast('অ্যাপ খোলা হচ্ছে...','ok');location.href=`intent://#Intent;package=${ap[1]};end`};$('#pxDl').onclick=()=>{location.href='tel:'+encodeURIComponent(ap[2])}}
+  if(ap){$('#pxDl').onclick=()=>{const l=document.createElement('a');l.href='tel:'+encodeURIComponent(ap[2]);l.target='_blank';l.rel='noopener';document.body.appendChild(l);l.click();l.remove()}}
   $('#pxQr').onclick=async()=>{const b=$('#pxQb');if(!b.classList.contains('hide')){b.classList.add('hide');return}b.classList.remove('hide');b.innerHTML='লোড হচ্ছে...';
     try{if(x.qr){b.innerHTML=`<img src="${esc(x.qr)}" alt="QR">`}else{const c=await qrCanvas(String(x.number),170);b.innerHTML='';b.appendChild(c)}b.insertAdjacentHTML('beforeend',`<div style="font-size:12px;color:var(--mu);margin-top:6px">${esc(x.name)}: <b>${esc(x.number)}</b></div>`)}catch{b.innerHTML='QR লোড হয়নি (নেট চেক করুন)'}}
 }

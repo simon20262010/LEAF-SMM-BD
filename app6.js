@@ -6,7 +6,7 @@
 let _dtab=null,_bkW=null;
 function bkInit(){
   const f=$('#v-funds'),pms=$('#pms');if(!f||!pms||!S.me)return;
-  const on=!!S.set.bkAutoOn&&!String(S.uid||'').startsWith('rb');
+  const on=!!S.set.autoDepOn&&!!S.set.bkAutoOn&&!String(S.uid||'').startsWith('rb');
   const tabs=$('#depTabs');
   if(!on){if(tabs){tabs.remove();$('#bkBox')&&$('#bkBox').remove();pms.previousElementSibling&&pms.previousElementSibling.classList.remove('hide');pms.classList.remove('hide')}return}
   if(tabs)return;
@@ -63,5 +63,46 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   document.addEventListener('click',async e=>{const b=e.target.closest('[data-fr]');if(!b)return;b.disabled=true;
     const r=await api('/u/files-resend',{orderId:b.dataset.fr}).catch(()=>({error:'নেটওয়ার্ক সমস্যা'}));b.disabled=false;
     r.error?toast(r.error,'er'):toast('📎 ফাইল আপনার টেলিগ্রামে পাঠানো হচ্ছে','ok')});
+})();
+
+/* ===== সার্ভিস কার্ড-লিস্ট (ড্রপডাউনের বদলে) ===== */
+(function(){
+  const sel=$('#svc');if(!sel||$('#svcBox'))return;
+  const st=document.createElement('style');st.textContent=`
+  #svcBox{margin:2px 0 10px;border:1.5px solid var(--bd);border-radius:18px;background:var(--card);overflow:hidden}
+  #svcBox .sh{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;background:linear-gradient(180deg,#f2f8ff,#e9f3ff)}
+  #svcBox .sh .bd{flex:0 0 auto}.sbd{background:var(--p);color:#fff;font-weight:800;font-size:13px;border-radius:12px;padding:5px 11px;min-width:46px;text-align:center}
+  #svcBox .sh .nm{flex:1;font-weight:700;font-size:14px;line-height:1.35;color:var(--tx);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  #svcBox .sh i{color:var(--p);transition:.2s}#svcBox.op .sh i{transform:rotate(180deg)}
+  #svcL{display:none;max-height:min(62vh,520px);overflow-y:auto;padding:10px;gap:9px;flex-direction:column;border-top:1px solid var(--bd);background:#f8fbff;-webkit-overflow-scrolling:touch}
+  #svcBox.op #svcL{display:flex}
+  .svi{border:1.5px solid var(--bd);background:#eaf3ff;border-radius:16px;padding:12px 13px;cursor:pointer;position:relative}
+  .svi .tp{display:flex;gap:10px;align-items:flex-start}.svi .tp .sbd{background:#fff;color:var(--p);border:1px solid var(--bd)}
+  .svi .nm{font-weight:700;font-size:14px;line-height:1.4;color:var(--tx);flex:1;word-break:break-word}
+  .svi .pr{margin-top:8px;font-weight:800;font-size:16px;color:var(--er)}.svi .pr small{font-weight:600;color:var(--mu);font-size:12px}
+  .svi .pr s{color:#94a3b8;font-weight:500;font-size:13px;margin-right:6px}
+  .svi.on{background:linear-gradient(135deg,#2196f3,#1565c0);border-color:#1565c0;box-shadow:0 8px 20px #1e88e555}
+  .svi.on .nm,.svi.on .pr,.svi.on .pr small{color:#fff}.svi.on .sbd{background:rgba(255,255,255,.22);color:#fff;border-color:transparent}
+  .svi .tg{font-size:11px;font-weight:700;margin-left:4px}
+  #info .sdh{font-weight:800;font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:8px;color:var(--tx)}#info .sdh i{color:var(--wa)}
+  #iDesc{white-space:pre-line;line-height:1.7}`;document.head.appendChild(st);
+  sel.style.display='none';const fb=$('#favBtn'),sp=sel.parentNode;
+  const box=document.createElement('div');box.id='svcBox';
+  box.innerHTML='<div class="sh" id="svcH"><span class="bd sbd" id="svcHb">—</span><span class="nm" id="svcHn">সার্ভিস বেছে নিন</span><i class="fa-solid fa-chevron-down"></i></div><div id="svcL"></div>';
+  sp.parentNode.insertBefore(box,sp);
+  if(fb){fb.style.margin='0';fb.addEventListener('click',e=>e.stopPropagation());box.querySelector('.sh').insertBefore(fb,box.querySelector('.sh i'))}
+  sp.style.display='none';
+  const inf=$('#info');if(inf&&!inf.querySelector('.sdh')){const h=document.createElement('div');h.className='sdh';h.innerHTML='<i class="fa-solid fa-bolt"></i> Service Details';inf.insertBefore(h,inf.firstChild)}
+  const price=s=>{const d=disc();return tk(s.rate*(1-d/100))};
+  const paint=()=>{const L=$('#svcL'),fv=favs(),cur=S.cur&&S.cur._id;
+    L.innerHTML=[...sel.options].map(o=>{const s=S.svcs.find(x=>x._id==o.value);if(!s)return '';
+      return `<div class="svi${s._id==cur?' on':''}" data-id="${s._id}"><div class="tp"><span class="sbd">${s.no||s.sid}</span><div class="nm">${fv.includes(s._id)?'⭐ ':''}${s.pop?'🔥 ':''}${s.isNew?'🆕 ':''}${s.sale?'💥 ':''}${esc(s.name)}</div></div>
+      <div class="pr">${s.rateOld?`<s>${tk(s.rateOld*(1-disc()/100))}</s>`:''}${price(s)} <small>per 1000</small></div></div>`}).join('')||'<div class="empty">এই ক্যাটাগরিতে সার্ভিস নেই</div>';
+    const s=S.cur;$('#svcHb').textContent=s?(s.no||s.sid):'—';$('#svcHn').textContent=s?s.name:'সার্ভিস বেছে নিন';
+    L.querySelectorAll('.svi').forEach(e=>e.onclick=()=>{sel.value=e.dataset.id;pick(e.dataset.id);box.classList.remove('op');box.scrollIntoView({block:'nearest',behavior:'smooth'})})};
+  $('#svcH').onclick=()=>{box.classList.toggle('op');if(box.classList.contains('op')){const o=box.querySelector('.svi.on');if(o)o.scrollIntoView({block:'center'})}};
+  const _pk2=pick;pick=function(id){_pk2(id);paint()};
+  const _fs=fillSvcs;fillSvcs=function(){_fs();paint()};
+  paint();
 })();
 //==END==
