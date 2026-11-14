@@ -198,4 +198,19 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   /* ৪৯ পাসওয়ার্ড চোখ */
   $$('input[type=password]').forEach(i=>{if(i._pw)return;i._pw=1;const w=document.createElement('div');w.className='pwW';i.parentNode.insertBefore(w,i);w.appendChild(i);const e=document.createElement('span');e.className='pwE';e.textContent='👁';w.appendChild(e);i.style.paddingRight='44px';e.onclick=()=>{const s=i.type=='password';i.type=s?'text':'password';e.textContent=s?'🙈':'👁';e.classList.toggle('on',s)}});
 })();
+/* ---- নাম বদলানো, সাপ্তাহিক দাম-কমা তালিকা, অফলাইনে আগের অর্ডার তালিকা ---- */
+(function(){
+  const m=$('#mAp')||document.querySelector('#v-set .mi#mTut');if(!m||$('#mNm'))return;
+  m.insertAdjacentHTML('beforebegin','<div class="mi" id="mNm"><span class="i"><i class="fa-solid fa-pen"></i></span>নাম বদলান<i class="fa-solid fa-chevron-right"></i></div><div class="mi" id="mDr"><span class="i"><i class="fa-solid fa-arrow-trend-down"></i></span>এই সপ্তাহে দাম কমেছে<i class="fa-solid fa-chevron-right"></i></div>');
+  $('#mNm').onclick=()=>{G(`<div class="sec"><i class="fa-solid fa-pen"></i>নাম বদলান</div><div class="pc"><small style="color:var(--mu)">২–২৪ অক্ষর, লিংক বা @ ছাড়া। ৭ দিনে একবারই বদলানো যায়।</small><input id="nmI" maxlength="24" value="${esc((S.me&&S.me.name)||'')}" style="margin-top:8px"><button class="btn" id="nmGo">সেভ করুন</button></div>`);
+    $('#nmGo').onclick=async()=>{const b=$('#nmGo');b.disabled=true;const r=await api('/u/name',{name:$('#nmI').value}).catch(()=>({error:'নেটওয়ার্ক সমস্যা'}));b.disabled=false;if(r.error)return toast(r.error,'er');toast('✅ নাম বদলেছে','ok');S._h='';syncNow(true);$('#gModal').classList.add('hide')}};
+  $('#mDr').onclick=async()=>{G('<div class="empty">লোড হচ্ছে...</div>');const j=await api('/u/drops',{}).catch(()=>({error:1}));
+    if(j.error)return G('<div class="empty">লোড করা যায়নি</div>');
+    G(`<div class="sec"><i class="fa-solid fa-arrow-trend-down"></i>এই সপ্তাহে দাম কমেছে</div>`+((j.rows||[]).length?j.rows.map(r=>`<div class="hi" data-dr="${r.id}" style="cursor:pointer"><div><b>#${r.sid} ${esc(r.name)}</b><div style="font-size:12px;color:var(--mu)"><s>${tk(r.old)}</s> → <b style="color:#16a34a">${tk(r.now)}</b> / ১০০০</div></div><span class="st completed">-${r.pct}%</span></div>`).join(''):`<div class="empty">${esc(j.note||'এই সপ্তাহে কোনো সার্ভিসের দাম কমেনি')}</div>`));
+    $$('[data-dr]').forEach(e=>e.onclick=()=>{const s=(S.svcs||[]).find(x=>x._id==e.dataset.dr);$('#gModal').classList.add('hide');go('home');if(s){const pl=$('#plat div[data-k="'+s.platform+'"]');if(pl)pl.click();setTimeout(()=>{try{$('#cat').value=s.category;$('#cat').dispatchEvent(new Event('change'));fillSvcs();$('#svc').value=s._id;pick(s._id)}catch(e){}},150)}})};
+  /* অফলাইন: শেষ অর্ডার তালিকা ফোনে জমিয়ে রাখা */
+  const key=()=>'ordc_'+S.uid,rep=(k,v)=>(v&&typeof v=='object'&&typeof v.toDate=='function')?{__ts:v.seconds}:v;
+  const _sn=syncNow;syncNow=async function(f){await _sn(f);try{if(S.orders&&S.orders.length){localStorage.setItem(key(),JSON.stringify(S.orders.slice(0,40),rep))}
+    else if(S.uid&&(!S.orders||!S.orders.length)){const c=localStorage.getItem(key());if(c&&!S._offl){S._offl=1;S.orders=fx(JSON.parse(c));rOrders();toast('📴 ইন্টারনেট সমস্যা — আগের অর্ডার তালিকা দেখাচ্ছি','er')}}}catch{}};
+})();
 //==END==
