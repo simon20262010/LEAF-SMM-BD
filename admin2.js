@@ -35,7 +35,7 @@ window.__X.ops=function(){
 
 /* ---------- ✨ নতুন ফিচার সেটিং ---------- */
 window.__X.feat=function(){
-  const {esc,toast,dbw,S}=A(),el=$('#v-feat');if(el._on)return;el._on=true;const s=S.set||{};
+  const {esc,toast,dbw,S,srv}=A(),el=$('#v-feat');if(el._on)return;el._on=true;const s=S.set||{};
   const ck=(id,v,t,h)=>`<label class="ck"><input type="checkbox" id="${id}" ${v?'checked':''}><span><b>${t}</b>${h?`<small>${h}</small>`:''}</span></label>`;
   const nm=(id,v,t,h,st='1')=>`<div><label>${t}</label><input id="${id}" type="number" min="0" step="${st}" value="${v??''}">${h?`<small class="mu">${h}</small>`:''}</div>`;
   el.innerHTML=`<h2 class="t">✨ নতুন ফিচার সেটিং <button class="btn" id="fSave">💾 সব সেভ করুন</button></h2>
@@ -57,6 +57,13 @@ window.__X.feat=function(){
    ${ck('fPa',s.provAutoAdd!==false,'নতুন সার্ভিস নিজে যোগ হোক','আপনি মুছে ফেলা সার্ভিস আর ফিরে আসবে না। প্রথমবারে একবারে সর্বোচ্চ ৪০০ টি আসে')}
    ${nm('fPm',s.provSyncMin||30,'কত মিনিট পরপর চেক করবে','সর্বনিম্ন ১০')}
    <button class="btn" id="fPn" style="margin-top:8px">🔄 এখনই সিংক করুন</button> <small id="fPl" style="color:var(--mu)"></small>
+  </div>
+  <div class="card"><h2 class="t sub">📣 টেলিগ্রাম অটো পোস্ট (ভিউ + রিয়্যাকশন)</h2>
+   ${ck('fApOn',!!s.apOn,'অটো পোস্ট সার্ভিস চালু','ইউজার নিজের চ্যানেল যোগ করবে, বটকে Admin বানাবে। চ্যানেলে নতুন পোস্ট হলেই অটো ভিউ/রিয়্যাকশন অর্ডার হবে ও ব্যালেন্স থেকে টাকা কাটবে।')}
+   <div class="fg">${nm('fApVs',s.apViewSid,'ভিউ সার্ভিসের ID (Service ID)','যে সার্ভিস দিয়ে ভিউ ডেলিভারি হবে (Post Views)')}${nm('fApVr',s.apViewRate,'ভিউ — ইউজারের দাম (প্রতি ১০০০, ৳)','','0.0001')}</div>
+   <div class="fg">${nm('fApRs',s.apReactSid,'রিয়্যাকশন সার্ভিসের ID','ফাঁকা = রিয়্যাকশন অপশন বন্ধ')}${nm('fApRr',s.apReactRate,'রিয়্যাকশন — ইউজারের দাম (প্রতি ১০০০, ৳)','','0.0001')}</div>
+   <div class="fg">${nm('fApMn',s.apRMin||5,'প্রতি পোস্টে রিয়্যাকশন Min','')}${nm('fApMx',s.apRMax||15,'প্রতি পোস্টে রিয়্যাকশন Max','')}</div>
+   <button class="btn s" id="fApL" type="button">📋 অটো পোস্ট অর্ডারগুলো দেখুন</button><div id="fApB" style="margin-top:8px;font-size:12px;overflow:auto"></div>
   </div>
   <div class="card"><h2 class="t sub">🚨 অটো ডিপোজিট সুরক্ষা</h2>
    ${ck('fAd',!!s.autoDepOn,'⚡ অটো ডিপোজিট চালু (মাস্টার সুইচ)','বন্ধ থাকলে SMS অটো যাচাই ও bKash অটো গেটওয়ে দুটোই পুরো বন্ধ, সব ডিপোজিট আপনি ম্যানুয়াল অ্যাপ্রুভ করবেন। ফিক্স ভালো করে টেস্ট না করে চালু করবেন না।')}
@@ -80,8 +87,9 @@ window.__X.feat=function(){
   $('#fBt').onclick=async()=>{try{const r=await A().srv('/adm/bb-test',{});toast(r.error||'✅ পোস্ট হয়েছে','ok')}catch(e){toast(e.message,'er')}};
   $('#fBtest').onclick=async()=>{const b=$('#fBres');b.textContent='টেস্ট হচ্ছে... (আগে “সব সেভ করুন” চেপে নিন)';try{const r=await A().srv('/adm/bk-test',{});b.innerHTML=r.error?'❌ '+esc(r.error):'✅ সংযোগ ঠিক আছে ('+esc(r.mode)+')<br>bKash কে এই Callback URL দিন: <b style="word-break:break-all">'+esc(r.callback)+'</b>'}catch(e){b.textContent='❌ '+e.message}};
   $('#fPn').onclick=async()=>{const b=$('#fPn');b.disabled=true;$('#fPl').textContent='চলছে... ১-২ মিনিট পর নোটিফিকেশন আসবে';await A().srv('/adm/prov-sync',{}).catch(()=>{});setTimeout(async()=>{const j=await A().srv('/adm/prov-sync-state',{}).catch(()=>({}));$('#fPl').textContent=j.last?'শেষ ফল: '+j.last:'';b.disabled=false},8000)};
+  $('#fApL').onclick=async()=>{const b=$('#fApB');b.textContent='লোড হচ্ছে...';const j=await srv('/adm/ap-log',{}).catch(()=>({error:1}));if(j.error)return b.textContent='লোড হয়নি';b.innerHTML='<b>চ্যানেল '+j.channels+' • মোট পোস্ট '+j.total+' • মোট টাকা ৳'+j.charge+'</b><table style="width:100%;margin-top:6px"><tr><th>সময়</th><th>চ্যানেল</th><th>ইউজার</th><th>ভিউ</th><th>রিয়্যা.</th><th>৳</th><th>সমস্যা</th></tr>'+j.rows.map(r=>`<tr><td>${esc(r.at)}</td><td>${esc(r.chan||'')}</td><td>${esc((r.uid||'').slice(0,12))}</td><td>${r.views}</td><td>${r.reacts}</td><td>${r.charge}</td><td>${esc(r.err||'')}</td></tr>`).join('')+'</table>'};
   $('#fSave').onclick=async()=>{const n=id=>{const v=$(id).value.trim();return v===''?null:+v};
-    const v={provAutoSync:$('#fPs').checked,provSyncDown:$('#fPd').checked,provAutoAdd:$('#fPa').checked,provSyncMin:Math.max(10,n('#fPm')||30),autoDepOn:$('#fAd').checked,smsStrict:$('#fSs').checked,smsSenders:$('#fSn').value.trim(),autoMax:n('#fAm')||0,autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
+    const v={apOn:$('#fApOn').checked,apViewSid:n('#fApVs')||0,apViewRate:n('#fApVr')||0,apReactSid:n('#fApRs')||0,apReactRate:n('#fApRr')||0,apRMin:n('#fApMn')||5,apRMax:Math.max(n('#fApMn')||5,n('#fApMx')||15),provAutoSync:$('#fPs').checked,provSyncDown:$('#fPd').checked,provAutoAdd:$('#fPa').checked,provSyncMin:Math.max(10,n('#fPm')||30),autoDepOn:$('#fAd').checked,smsStrict:$('#fSs').checked,smsSenders:$('#fSn').value.trim(),autoMax:n('#fAm')||0,autoRefundFail:$('#fRef').checked,linkLive:$('#fLive').checked,newUserOrders:n('#fNo')??3,newUserCap:n('#fNc')||0,flashLeft:n('#fFl'),cashbackPct:n('#fCb')||0,cashbackMin:n('#fCm')??5000,
       transferOn:$('#fTr').checked,transferFeePct:n('#fTf')??2,transferMin:n('#fTm')??10,transferNeedDep:n('#fTd')??50,transferDailyMax:n('#fTx')??5000,faqAuto:$('#fFq').value.trim(),ticketEta:$('#fEt').value.trim(),dailyReport:$('#fDr').checked,chalOn:$('#fCh').checked,chalOrders:n('#fCo')??5,chalPrize:n('#fCp')??10,bestBuyerOn:$('#fBb').checked,bestBuyerChat:$('#fBc').value.trim(),doneCard:$('#fDc').checked,bkAutoOn:$('#fBk').checked,bkGw:{mode:$('#fBm').value,appKey:$('#fBa').value.trim(),appSecret:$('#fBs').value.trim(),user:$('#fBu').value.trim(),pass:$('#fBp').value.trim(),max:n('#fBx')||30000}};
     try{await dbw('set','settings','main',v,true);Object.assign(S.set,v);toast('✅ সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 };
