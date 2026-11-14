@@ -130,4 +130,72 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   };
   $('#mAp').onclick=()=>{G('<div class="empty">লোড হচ্ছে...</div>');draw()};
 })();
+/* ---- মিনি অ্যাপ অ্যানিমেশন প্যাক (ফোন হালকা রাখতে শুধু transform/opacity) ---- */
+(function(){
+  const red=()=>matchMedia('(prefers-reduced-motion:reduce)').matches||localStorage.getItem('animOff')=='1';
+  const st=document.createElement('style');st.textContent=`
+  .pgin{animation:pgIn .32s cubic-bezier(.2,.8,.2,1) both}@keyframes pgIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  .nav a.tapb i{animation:tapB .45s cubic-bezier(.3,1.6,.5,1)}@keyframes tapB{0%{transform:scale(1)}35%{transform:scale(1.5) translateY(-6px)}100%{transform:scale(1)}}
+  .balFlash{animation:balRed .9s}@keyframes balRed{0%,100%{filter:none}25%{filter:hue-rotate(150deg) saturate(2)}}
+  .cpOk{background:#16a34a!important;color:#fff!important;transform:scale(1.06);transition:.15s}
+  #info.expd{animation:infoIn .38s cubic-bezier(.2,.8,.2,1) both;transform-origin:top}@keyframes infoIn{from{opacity:0;transform:scaleY(.6)}to{opacity:1;transform:none}}
+  #link.lkOk{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.15)}
+  #link.lkBad{border-color:#ef4444!important;animation:shk .4s}@keyframes shk{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  .lkTick{position:absolute;right:14px;color:#16a34a;font-size:18px;pointer-events:none;animation:pop .3s both}
+  #order.busy{pointer-events:none;opacity:.9}#order.busy i{display:none}#order.busy::before{content:"";display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;margin-right:8px;vertical-align:-3px;animation:s .7s linear infinite}
+  #order.shk{animation:shk .45s;background:linear-gradient(135deg,#ef4444,#b91c1c)!important}
+  .svSw{animation:fadeUp .3s both}
+  .st.processing::before{content:"";display:inline-block;width:9px;height:9px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;margin-right:5px;vertical-align:-1px;animation:s .8s linear infinite}
+  .st.completed{position:relative;overflow:hidden}.st.completed::after{content:"";position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);animation:cmpS 1.1s .4s 1 both}@keyframes cmpS{from{transform:translateX(-120%) skewX(-20deg)}to{transform:translateX(380%) skewX(-20deg)}}
+  .lbt>div:first-child .m{position:relative}.lbt>div:first-child .m::before{content:"👑";position:absolute;top:-20px;left:50%;margin-left:-11px;font-size:20px;animation:crwn 2.4s ease-in-out infinite;transform-origin:50% 100%}@keyframes crwn{0%,100%{transform:rotate(-12deg) translateY(0)}50%{transform:rotate(12deg) translateY(-3px)}}
+  .fxP{position:fixed;z-index:130;pointer-events:none;animation:fxFly var(--d,1s) ease-out forwards}@keyframes fxFly{0%{opacity:1;transform:translate(0,0) scale(1) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(.4) rotate(var(--r,0deg))}}
+  .fxRain{position:fixed;top:-30px;z-index:130;pointer-events:none;font-size:24px;animation:fxFall 1.8s ease-in forwards}@keyframes fxFall{to{transform:translateY(105vh) rotate(360deg);opacity:.9}}
+  .failB{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;pointer-events:none}.failB .c{width:96px;height:96px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;box-shadow:0 14px 40px rgba(239,68,68,.5);animation:pop .4s both,shk .5s .35s}.failB path{stroke:#fff;stroke-width:6;fill:none;stroke-linecap:round;stroke-dasharray:50;stroke-dashoffset:50;animation:draw .4s .2s ease forwards}
+  .gift{position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;pointer-events:none}.gift .b{font-size:84px;animation:gBox 1.5s both}@keyframes gBox{0%{transform:scale(.3) rotate(0);opacity:0}20%{transform:scale(1.1);opacity:1}35%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}65%{transform:rotate(-8deg) scale(1.15)}80%{transform:scale(1.5);opacity:1}100%{transform:scale(2.2);opacity:0}}
+  .ptr{position:fixed;top:-50px;left:50%;margin-left:-20px;width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.2);z-index:140;display:flex;align-items:center;justify-content:center;font-size:20px;transition:top .2s}
+  .ptr.sp i{animation:s .7s linear infinite;display:inline-block;font-style:normal}
+  #mDk .i i{transition:transform .5s}.pwW{position:relative}.pwE{position:absolute;right:14px;top:50%;margin-top:-12px;cursor:pointer;font-size:17px;color:#64748b;transition:transform .3s}.pwE.on{transform:rotateY(360deg);color:var(--p)}
+  `;document.head.appendChild(st);
+  const fly=(x,y,txt,n,spread,col)=>{if(red())return;for(let i=0;i<n;i++){const e=document.createElement('i');e.className='fxP';e.textContent=txt;e.style.cssText=`left:${x}px;top:${y}px;font-style:normal;font-size:${14+Math.random()*10}px;--x:${(Math.random()-.5)*spread}px;--y:${-Math.random()*spread*.9-10}px;--r:${(Math.random()-.5)*300}deg;--d:${.7+Math.random()*.5}s;${col?'color:'+col:''}`;document.body.appendChild(e);setTimeout(()=>e.remove(),1300)}};
+  const rain=(arr)=>{if(red())return;for(let i=0;i<20;i++){const e=document.createElement('i');e.className='fxRain';e.textContent=arr[i%arr.length];e.style.cssText=`left:${Math.random()*95}vw;animation-delay:${Math.random()*.7}s;font-style:normal`;document.body.appendChild(e);setTimeout(()=>e.remove(),2800)}};
+  const failB=()=>{if(red())return;const d=document.createElement('div');d.className='failB';d.innerHTML='<div class="c"><svg width="56" height="56" viewBox="0 0 60 60"><path d="M16 16 L44 44 M44 16 L16 44"/></svg></div>';document.body.appendChild(d);setTimeout(()=>d.remove(),1300);try{TG&&TG.HapticFeedback&&TG.HapticFeedback.notificationOccurred('error')}catch{}};
+  const giftB=()=>{if(red())return;const d=document.createElement('div');d.className='gift';d.innerHTML='<div class="b">🎁</div>';document.body.appendChild(d);setTimeout(()=>{d.remove();fly(innerWidth/2,innerHeight/2,'✨',16,260)},1300)};
+  /* ৩ পেজ ট্রানজিশন */
+  const _go=go;go=function(v){_go(v);const s=$('#v-'+v);if(s&&!red()){s.classList.remove('pgin');void s.offsetWidth;s.classList.add('pgin')}};
+  /* ৪ নেভ ট্যাপ */
+  $$('.nav a').forEach(a=>a.addEventListener('click',()=>{if(red())return;a.classList.remove('tapb');void a.offsetWidth;a.classList.add('tapb')}));
+  /* ৯/১৪/১০ ব্যালেন্স বাড়লে টাকার বৃষ্টি + সোনালি তারা, কমলে লাল ঝলক */
+  let lb=null;setInterval(()=>{const b=S.me&&S.me.balance;if(b==null)return;const v=+b;if(lb!==null&&Math.abs(v-lb)>=0.01){
+    if(v>lb){rain(['💰','🪙','💵','⭐','✨']);try{TG&&TG.HapticFeedback&&TG.HapticFeedback.notificationOccurred('success')}catch{}}
+    else if(!red()){$$('.bal,#fBal').forEach(e=>{e.classList.remove('balFlash');void e.offsetWidth;e.classList.add('balFlash')})}}
+    lb=v},1200);
+  /* ১২ কপি বাটনে টিক */
+  document.addEventListener('click',e=>{const b=e.target.closest('[data-cp],#rCopy,#pxCp,#apCp');if(!b||b._cp)return;b._cp=1;const o=b.innerHTML;b.innerHTML='✔ কপি';b.classList.add('cpOk');setTimeout(()=>{b.innerHTML=o;b.classList.remove('cpOk');b._cp=0},1400)},true);
+  /* ১৬ সার্ভিস বিস্তারিত খোলা, ২৪ ক্যাটাগরি বদলে ফেড */
+  const info=$('#info');if(info){let wh=info.classList.contains('hide');new MutationObserver(()=>{const h=info.classList.contains('hide');if(wh&&!h&&!red()){info.classList.remove('expd');void info.offsetWidth;info.classList.add('expd')}wh=h}).observe(info,{attributes:true,attributeFilter:['class']})}
+  const cat=$('#cat');if(cat)cat.addEventListener('change',()=>{if(red())return;const r=$('#svcBox')||$('#svc');if(r){r.classList.remove('svSw');void r.offsetWidth;r.classList.add('svSw')}});
+  /* ১৭ মোট চার্জ নরমভাবে বদলানো */
+  const tot=$('#total');if(tot){let own=false,cur=0;new MutationObserver(()=>{if(own||red())return;const m=tot.textContent.match(/^(\D*)([\d.]+)(.*)$/);if(!m)return;const to=parseFloat(m[2]),from=cur;cur=to;if(from===to)return;const dec=(m[2].split('.')[1]||'').length,t0=performance.now();own=true;const f=t=>{const p=Math.min(1,(t-t0)/450),e=1-Math.pow(1-p,3);own=true;tot.textContent=m[1]+(from+(to-from)*e).toFixed(dec)+m[3];own=p<1;if(p<1)requestAnimationFrame(f);else setTimeout(()=>own=false,0)};requestAnimationFrame(f)}).observe(tot,{childList:true,characterData:true,subtree:true})}
+  /* ১৮ লিংক ঠিক/ভুল */
+  const lk=$('#link');if(lk){lk.parentNode.style.position='relative';const t=document.createElement('span');t.className='lkTick hide';t.textContent='✔';lk.parentNode.insertBefore(t,lk.nextSibling);
+    const ok=v=>/^https?:\/\/[^\s.]+\.[^\s]{2,}$/i.test(v.trim());
+    lk.addEventListener('input',()=>{const v=lk.value;lk.classList.remove('lkBad');const g=ok(v);lk.classList.toggle('lkOk',g);t.classList.toggle('hide',!g);t.style.top=(lk.offsetTop+lk.offsetHeight/2-11)+'px'});
+    lk.addEventListener('blur',()=>{if(lk.value&&!ok(lk.value)&&!red()){lk.classList.remove('lkBad');void lk.offsetWidth;lk.classList.add('lkBad')}})}
+  /* ১৯/২১ অর্ডার বাটন: ঘূর্ণি → সফল টিক / ব্যর্থ লাল ✖ */
+  const ob=$('#order');if(ob){const _o=ob.onclick;ob.onclick=async function(ev){ob.classList.add('busy');ob.classList.remove('shk');const tc=$('#toast');tc.className='toast';let err=null;try{await _o.call(this,ev)}catch(e){err=e}
+    ob.classList.remove('busy');const bad=err||/\ber\b/.test(tc.className);if(bad&&!red()){ob.classList.add('shk');failB();setTimeout(()=>ob.classList.remove('shk'),900)}if(err)throw err}}
+  /* ২৩ ফেভারিটে তারার বিস্ফোরণ */
+  const fv=$('#favBtn');if(fv)fv.addEventListener('click',()=>{const r=fv.getBoundingClientRect();setTimeout(()=>{if(fv.classList.contains('on'))fly(r.left+r.width/2,r.top+r.height/2,'⭐',9,110)},60)});
+  /* ৩৫ উপহার বাক্স: কোড/মিশন/বোনাসে ব্যালেন্স যোগ হলে */
+  const _t=toast;toast=function(m,t){_t(m,t);if(t=='ok'&&/🎉/.test(m||'')&&/যোগ হয়েছে/.test(m||''))giftB()};
+  /* ২৮ টেনে রিফ্রেশ (পাতা ঘোরে) */
+  (function(){let y0=null,dy=0;const p=document.createElement('div');p.className='ptr';p.innerHTML='<i>🍀</i>';document.body.appendChild(p);
+    document.addEventListener('touchstart',e=>{y0=(scrollY<=0&&!document.querySelector('.modal:not(.hide)'))?e.touches[0].clientY:null;dy=0},{passive:true});
+    document.addEventListener('touchmove',e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy>0&&scrollY<=0){p.style.top=Math.min(dy/2.2-40,60)+'px';p.firstChild.style.transform='rotate('+(dy*3)+'deg)'}},{passive:true});
+    document.addEventListener('touchend',async()=>{if(y0==null)return;const go_=dy>130;y0=null;if(go_){p.classList.add('sp');p.style.top='70px';try{S._h='';await syncNow(true)}catch{}setTimeout(()=>{p.classList.remove('sp');p.style.top='-50px'},500)}else p.style.top='-50px'})})();
+  /* ৪৩ ডার্ক মোড সূর্য/চাঁদ */
+  const dk=$('#mDk');if(dk)dk.addEventListener('click',()=>{const ic=dk.querySelector('i.fa-solid');if(!ic)return;ic.style.transform='rotate(360deg) scale(1.3)';setTimeout(()=>{const d=document.documentElement.classList.contains('dark');ic.className='fa-solid '+(d?'fa-sun':'fa-moon');ic.style.transform=''},250)});
+  /* ৪৯ পাসওয়ার্ড চোখ */
+  $$('input[type=password]').forEach(i=>{if(i._pw)return;i._pw=1;const w=document.createElement('div');w.className='pwW';i.parentNode.insertBefore(w,i);w.appendChild(i);const e=document.createElement('span');e.className='pwE';e.textContent='👁';w.appendChild(e);i.style.paddingRight='44px';e.onclick=()=>{const s=i.type=='password';i.type=s?'text':'password';e.textContent=s?'🙈':'👁';e.classList.toggle('on',s)}});
+})();
 //==END==
