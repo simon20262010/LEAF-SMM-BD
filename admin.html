@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107h";window.__E=[];window.__X={};
+window.__V="v1107i";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -218,7 +218,7 @@ async function enter(u){
   if(!me||me.error){toast(me&&me.error?me.error:'এই অ্যাকাউন্টের অ্যাডমিন অনুমতি নেই','er');await signOut(auth);return}
   S.set=fx(me.settings||{});
   $('#login').classList.add('hide');$('#panel').classList.remove('hide');
-  refresh();clearInterval(S._pt);S._pt=setInterval(()=>{if(!document.hidden)refresh()},10000);
+  refresh();clearInterval(S._pt);S._pt=setInterval(()=>{if(!document.hidden){S._auto=true;refresh()}},10000);
 }
 const NEED={dash:['orders'],orders:['orders'],deps:['deposits'],users:['users'],svcs:['services'],prov:['providers'],reqs:['requests'],tix:['tickets'],rb:[],tools:[],set:[]};
 const KEY={orders:'orders',deposits:'deps',users:'users',services:'svcs',tickets:'tix',requests:'reqs',providers:'prov'};
@@ -233,7 +233,8 @@ async function load(c){
 }
 let _rf=0;
 async function refresh(){
-  const id=++_rf;
+  const id=++_rf;const auto=S._auto;S._auto=false;
+  if(auto&&cur=='svcs'&&S.svcs.length){try{const st=await srv('/adm/stats',{});if(st&&!st.error)S.st=st}catch(e){}badges();return}
   try{
     const [st,sm]=await Promise.all([srv('/adm/stats',{}),cur=='set'||cur=='rb'||!S.set.siteName?srv('/adm/me',{}):null]);
     if(st&&!st.error)S.st=st;
@@ -487,6 +488,7 @@ function rTools(){
 /* SERVICES */
 const PL=['facebook','instagram','youtube','tiktok','telegram','twitter','whatsapp','other','code'];
 function rSvc(){
+  const oq=($('#svq')||{}).value||'';
   const l=[...S.svcs].sort((a,b)=>a.sid-b.sid);
   $('#v-svcs').innerHTML=`<h2 class="t">সার্ভিস<button class="btn" id="sn"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button> <button class="btn r" id="swp">🗑 সব সার্ভিস মুছুন</button></h2><div class="card"><input id="svq" placeholder="🔍 সার্ভিস ID বা নাম দিয়ে খুঁজুন" style="margin-bottom:10px"><div class="tw"><table><tr><th>ID</th><th>প্ল্যাটফর্ম</th><th>ক্যাটাগরি</th><th>নাম</th><th>রেট/১০০০</th><th>Min-Max</th><th>চালু</th><th></th></tr>
   <tbody id="svb"></tbody></table></div></div>`;
@@ -497,7 +499,7 @@ function rSvc(){
     $('#svb').innerHTML=m.slice(0,lim).map(row).join('')||'<tr><td colspan=8 class="empty">'+(q?'কিছু পাওয়া যায়নি':'কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন')+'</td></tr>'+(m.length>lim?'<tr><td colspan=8 style="text-align:center"><button class="btn" id="svm">আরও দেখান ('+(m.length-lim)+' টি বাকি)</button></td></tr>':'');
     const b=$('#svm');if(b)b.onclick=()=>{lim+=100;draw()};
     $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));$$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>dbw('delete','services',b.dataset.d)))};
-  let tm;$('#svq').oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{lim=100;draw()},250)};draw();
+  $('#svq').value=oq;let tm;$('#svq').oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{lim=100;draw()},250)};draw();
   $('#swp').onclick=async()=>{try{const d=await srv('/adm/svc-wipe',{dry:true});if(d.error)return toast(d.error,'er');if(!confirm('⚠️ '+d.delete+' টি সার্ভিস মুছে যাবে (ওয়েবসাইট কোড '+d.keep+' টি থাকবে)। এটা ফেরানো যায় না। চালিয়ে যাবেন?'))return;const t=prompt('নিশ্চিত করতে বড় হাতের অক্ষরে DELETE লিখুন');if(t!=='DELETE')return toast('বাতিল','er');const r=await srv('/adm/svc-wipe',{confirm:'DELETE'});r.error?toast(r.error,'er'):(toast('✅ '+r.deleted+' টি মুছেছে','ok'),refresh())}catch(e){toast(e.message,'er')}};
 
   $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));
@@ -673,5 +675,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107h</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107i</div></body>
 </html>
