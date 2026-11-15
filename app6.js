@@ -213,4 +213,10 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   const _sn=syncNow;syncNow=async function(f){await _sn(f);try{if(S.orders&&S.orders.length){localStorage.setItem(key(),JSON.stringify(S.orders.slice(0,40),rep))}
     else if(S.uid&&(!S.orders||!S.orders.length)){const c=localStorage.getItem(key());if(c&&!S._offl){S._offl=1;S.orders=fx(JSON.parse(c));rOrders();toast('📴 ইন্টারনেট সমস্যা — আগের অর্ডার তালিকা দেখাচ্ছি','er')}}}catch{}};
 })();
+/* ---- ১০৫ পেমেন্টের সময়-গণনা (রিমাইন্ডার) ---- */
+(function(){
+  const pf=$('#payForm');if(!pf||$('#payTm'))return;const d=document.createElement('div');d.id='payTm';d.style.cssText='background:#fff7ed;color:#c2410c;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:10px';pf.insertBefore(d,pf.firstChild);
+  let t0=0,iv=null;const tick=()=>{const r=900-Math.floor((Date.now()-t0)/1000);if(r>0){const m=Math.floor(r/60),s=r%60;d.innerHTML='⏳ টাকা পাঠিয়ে <b>'+m+':'+String(s).padStart(2,'0')+'</b> মিনিটের মধ্যে TrxID জমা দিন, দ্রুত জমা দিলে দ্রুত অনুমোদন হয়'}else{d.innerHTML='⏰ সময় পেরিয়েছে। টাকা পাঠিয়ে থাকলে এখনই TrxID জমা দিন'}};
+  let was=pf.classList.contains('hide');new MutationObserver(()=>{const h=pf.classList.contains('hide');if(was&&!h){t0=Date.now();clearInterval(iv);tick();iv=setInterval(tick,1000)}if(h)clearInterval(iv);was=h}).observe(pf,{attributes:true,attributeFilter:['class']});
+})();
 //==END==
