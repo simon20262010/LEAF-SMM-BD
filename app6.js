@@ -219,4 +219,11 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   let t0=0,iv=null;const tick=()=>{const r=900-Math.floor((Date.now()-t0)/1000);if(r>0){const m=Math.floor(r/60),s=r%60;d.innerHTML='⏳ টাকা পাঠিয়ে <b>'+m+':'+String(s).padStart(2,'0')+'</b> মিনিটের মধ্যে TrxID জমা দিন, দ্রুত জমা দিলে দ্রুত অনুমোদন হয়'}else{d.innerHTML='⏰ সময় পেরিয়েছে। টাকা পাঠিয়ে থাকলে এখনই TrxID জমা দিন'}};
   let was=pf.classList.contains('hide');new MutationObserver(()=>{const h=pf.classList.contains('hide');if(was&&!h){t0=Date.now();clearInterval(iv);tick();iv=setInterval(tick,1000)}if(h)clearInterval(iv);was=h}).observe(pf,{attributes:true,attributeFilter:['class']});
 })();
+/* ---- সাপ্তাহিক চ্যালেঞ্জ: হোমের ওপর থেকে সরিয়ে সেটিংসের সবার ওপরের বাটনে ---- */
+(function(){
+  const box=$('#chalBox'),first=document.querySelector('#v-set .mi');if(!box||!first||$('#mCh'))return;
+  box.remove();
+  first.insertAdjacentHTML('beforebegin','<div class="mi" id="mCh"><span class="i"><i class="fa-solid fa-flag-checkered"></i></span>সাপ্তাহিক চ্যালেঞ্জ<i class="fa-solid fa-chevron-right"></i></div>');
+  $('#mCh').onclick=()=>{G('<div id="chW"><div class="empty">লোড হচ্ছে...</div></div>');const w=$('#chW');w.innerHTML='';w.appendChild(box);loadChal(true);setTimeout(()=>{if(!box.innerHTML.trim())w.innerHTML='<div class="empty">এখন কোনো চ্যালেঞ্জ চালু নেই</div>'},1500)};
+})();
 //==END==
