@@ -239,4 +239,32 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   #gModal:not(.hide) #gBody{animation:shtUp .38s cubic-bezier(.2,1.1,.4,1) both}@keyframes shtUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
   `;document.head.appendChild(st);
 })();
+/* ---- ক্যাটাগরি বাছাই: সুন্দর কার্ড-তালিকা (ফোনের সাধারণ সাদা-কালো ডায়ালগের বদলে) ---- */
+(function(){
+  const sel=$('#cat');if(!sel||$('#catBox'))return;
+  const st=document.createElement('style');st.textContent=`
+  #catBox{margin:2px 0 10px;border:1.5px solid var(--p);border-radius:18px;background:var(--card);overflow:hidden;box-shadow:0 0 0 3px rgba(30,136,229,.1)}
+  #catBox .sh{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:linear-gradient(180deg,#f2f8ff,#e9f3ff)}
+  #catBox .sh .nm{flex:1;font-weight:700;font-size:14.5px;line-height:1.35;color:var(--tx);word-break:break-word}
+  #catBox .sh>i{color:var(--p);transition:.2s}#catBox.op .sh>i{transform:rotate(180deg)}
+  .cci{flex:0 0 auto;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;box-shadow:0 4px 10px rgba(0,0,0,.15)}
+  #catL{display:none;max-height:min(60vh,480px);overflow-y:auto;padding:10px;gap:9px;flex-direction:column;border-top:1px solid var(--bd);background:#f8fbff;-webkit-overflow-scrolling:touch}
+  #catBox.op #catL{display:flex}
+  .cai{display:flex;align-items:center;gap:12px;border:1.5px solid var(--bd);background:#eaf3ff;border-radius:16px;padding:10px 12px;cursor:pointer}
+  .cai .nm{flex:1;font-weight:600;font-size:14px;line-height:1.4;color:var(--tx);word-break:break-word}
+  .cai.on{background:linear-gradient(135deg,#2196f3,#1565c0);border-color:#1565c0;box-shadow:0 8px 20px #1e88e555}.cai.on .nm{color:#fff}
+  .cai .ck{color:#fff;font-size:15px}`;document.head.appendChild(st);
+  const box=document.createElement('div');box.id='catBox';
+  box.innerHTML='<div class="sh" id="catH"><span class="cci" id="catHi"></span><span class="nm" id="catHn">ক্যাটাগরি বেছে নিন</span><i class="fa-solid fa-chevron-down"></i></div><div id="catL"></div>';
+  sel.parentNode.insertBefore(box,sel);sel.style.display='none';
+  const ico=cat=>{const s=(S.svcs||[]).find(x=>x.category==cat),p=(typeof PLATS!='undefined'&&PLATS.find(x=>x[0]==(s&&s.platform)))||['','fa-solid fa-layer-group','#1e88e5'];return `<span class="cci" style="background:${p[2]}"><i class="${p[1]}"></i></span>`};
+  const paint=()=>{const L=$('#catL'),cur=sel.value,opts=[...sel.options].filter(o=>o.value||o.text);
+    L.innerHTML=opts.map(o=>`<div class="cai${o.text==cur||o.value==cur?' on':''}" data-c="${esc(o.value||o.text)}">${ico(o.value||o.text)}<span class="nm">${esc(o.text)}</span>${o.text==cur||o.value==cur?'<i class="fa-solid fa-check ck"></i>':''}</div>`).join('')||'<div class="empty">কোনো ক্যাটাগরি নেই</div>';
+    const h=$('#catHi');h.outerHTML=ico(cur).replace('class="cci"','class="cci" id="catHi"');$('#catHn').textContent=cur||'ক্যাটাগরি বেছে নিন';
+    L.querySelectorAll('.cai').forEach(e=>e.onclick=()=>{sel.value=e.dataset.c;sel.dispatchEvent(new Event('change'));box.classList.remove('op');paint();box.scrollIntoView({block:'nearest',behavior:'smooth'})})};
+  $('#catH').onclick=()=>{box.classList.toggle('op');if(box.classList.contains('op')){const o=box.querySelector('.cai.on');if(o)o.scrollIntoView({block:'center'})}};
+  const _fc=fillCats;fillCats=function(){_fc();paint()};
+  new MutationObserver(paint).observe(sel,{childList:true});
+  paint();
+})();
 //==END==
