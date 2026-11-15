@@ -75,12 +75,12 @@ $('#mVip').onclick=()=>{const sp=S.me?.totalSpent||0,LV=lvl();let li=0;LV.forEac
   ${LV.map((l,i)=>`<div class="hi" style="${i==li?'border:2px solid var(--p)':''}"><div><b>${esc(l[0])}</b> ${i==li?'<span class="st completed">আপনি এখানে</span>':''}<div style="font-size:12px;color:var(--mu)">মোট খরচ ${tk(l[1])}+</div></div><b style="color:var(--ok)">${l[2]}% ছাড়</b></div>`).join('')}`)};
 
 $('#mXp').onclick=()=>{
-  const rate=+S.set.xpPerBdt||0,min=+S.set.minXpConvert||0;if(!S.me)return;
+  const rate=+S.set.xpPerBdt||0,min=+S.set.minXpConvert||0,fee=Math.min(90,Math.max(0,+S.set.xpFeePct||0));if(!S.me)return;
   if(!rate)return toast('XP কনভার্ট এখন চালু নেই','er');
-  G(`<div class="sec"><i class="fa-solid fa-arrows-rotate"></i>XP থেকে BDT</div><div class="how">আপনার XP: <b>${S.me.xp||0}</b><br>${rate} XP = ৳1${min?` • ন্যূনতম ${min} XP`:''}</div>
+  G(`<div class="sec"><i class="fa-solid fa-arrows-rotate"></i>XP থেকে BDT</div><div class="how">আপনার XP: <b>${S.me.xp||0}</b><br>${rate} XP = ৳1${fee?` • কনভার্ট চার্জ ${fee}%`:''}${min?` • ন্যূনতম ${min} XP`:''}</div>
   <label class="l">কত XP কনভার্ট করবেন</label><input id="xpA" type="number" inputmode="numeric" placeholder="যেমন ${Math.max(min,rate)}">
   <div class="row"><span>আপনি পাবেন</span><b id="xpO">৳0.00</b></div><button class="btn" id="xpB">কনভার্ট করুন</button>`);
-  const cv=()=>Math.floor((parseInt($('#xpA').value)||0)/rate*100)/100;
+  const cv=()=>Math.floor((parseInt($('#xpA').value)||0)/rate*(1-fee/100)*100)/100;
   $('#xpA').oninput=()=>$('#xpO').textContent=tk(cv());
   $('#xpB').onclick=async()=>{const x=parseInt($('#xpA').value)||0,bdt=cv();
     if(x<Math.max(min,rate))return toast(`কমপক্ষে ${Math.max(min,rate)} XP দিন`,'er');

@@ -226,4 +226,17 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   first.insertAdjacentHTML('beforebegin','<div class="mi" id="mCh"><span class="i"><i class="fa-solid fa-flag-checkered"></i></span>সাপ্তাহিক চ্যালেঞ্জ<i class="fa-solid fa-chevron-right"></i></div>');
   $('#mCh').onclick=()=>{G('<div id="chW"><div class="empty">লোড হচ্ছে...</div></div>');const w=$('#chW');w.innerHTML='';w.appendChild(box);loadChal(true);setTimeout(()=>{if(!box.innerHTML.trim())w.innerHTML='<div class="empty">এখন কোনো চ্যালেঞ্জ চালু নেই</div>'},1500)};
 })();
+/* ---- আরও ছোট অ্যানিমেশন: চাপলে নরম সংকোচন, তালিকার ধাপে ধাপে আসা, ইনপুটে আলো, নিচ থেকে মডাল ওঠা ---- */
+(function(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches||localStorage.getItem('animOff')=='1')return;
+  const st=document.createElement('style');let d='';for(let i=1;i<=8;i++)d+=`#olist>:nth-child(${i}),#dHist>:nth-child(${i}),#rList>:nth-child(${i}),#v-set .mi:nth-of-type(${i}){animation-delay:${i*45}ms}`;
+  st.textContent=`
+  .btn,.mi,.pc,.hi,.svi,.rbtn,.pmo button{transition:transform .12s ease,box-shadow .2s}
+  .btn:active,.mi:active,.hi:active,.svi:active,.rbtn:active,.pmo button:active{transform:scale(.96)}
+  #olist>*,#dHist>*,#rList>*,.pgin .mi{animation:lstIn .4s cubic-bezier(.2,.8,.2,1) both}@keyframes lstIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  ${d}
+  input:focus,select:focus,textarea:focus{box-shadow:0 0 0 4px rgba(30,136,229,.16);transition:box-shadow .2s}
+  #gModal:not(.hide) #gBody{animation:shtUp .38s cubic-bezier(.2,1.1,.4,1) both}@keyframes shtUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+  `;document.head.appendChild(st);
+})();
 //==END==
