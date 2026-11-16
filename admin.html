@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107p";window.__E=[];window.__X={};
+window.__V="v1107q";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -300,7 +300,7 @@ function usageCard(){
   <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:6px"><b>${u.usedMb} MB ব্যবহার</b><span style="color:var(--mu)">খালি ${u.freeMb} / ${u.limitMb} MB</span></div>
   <div style="font-size:13px;line-height:1.9;margin-top:10px">📈 প্রতিদিন গড়ে নতুন ডাটা: <b>~${u.perDayMb} MB</b><br>⏳ কিছু না মুছলে এভাবে চললে ভরতে লাগবে: <b style="color:${col}">${left}</b><br>🧹 ৩০ দিনের পুরোনো ডাটা মুছতে থাকলে ডাটাবেস সর্বোচ্চ প্রায় <b>${u.steadyMb} MB</b>-এ থামবে ${u.steadyMb<u.limitMb*0.9?'✅ সীমার মধ্যে':'⚠️ সীমার কাছাকাছি'}</div>
   <div style="font-size:12px;color:var(--mu);margin-top:8px;line-height:1.6">ডাটা ${u.dataMb} MB + ইন্ডেক্স ${u.indexMb} MB (ডিস্কে ${u.diskMb} MB)। ${u.exact?'সংখ্যাগুলো ডাটাবেস থেকে সরাসরি মাপা':'প্রতিদিনের বৃদ্ধির হিসাব নমুনা থেকে'}। ইউজার, ব্যালেন্স, মোট ডিপোজিট/খরচ/অর্ডার সংখ্যা মোছার পরেও ঠিক থাকে। শুধু পুরোনো অর্ডার-তালিকা সরে যায়।</div>
-  <button class="btn s" id="clB2" style="margin-top:10px"><i class="fa-solid fa-broom"></i> পুরোনো ডাটা মুছুন</button></div>`;
+  <button class="btn s" id="clB2" style="margin-top:10px"><i class="fa-solid fa-broom"></i> পুরোনো ডাটা মুছুন</button> <button class="btn s gr" id="usD" style="margin-top:10px">📂 কোথায় কত জায়গা</button></div>`;
 }
 function rDash(){
   const t=S.st||{};
@@ -311,10 +311,11 @@ function rDash(){
   <div class="card"><h2 class="t" style="font-size:16px">💹 সার্ভিস অনুযায়ী লাভ <span style="font-size:12px;color:var(--mu)">(৩০ দিন)</span></h2><div class="tw"><table><tr><th>সার্ভিস</th><th>অর্ডার</th><th>বিক্রি</th><th>খরচ</th><th>লাভ</th></tr><tbody id="spB"><tr><td colspan=5 class="empty">লোড হচ্ছে...</td></tr></tbody></table></div><div style="font-size:12px;color:var(--mu);margin-top:8px">খরচ দেখতে প্রোভাইডার থেকে সার্ভিস আবার ইমপোর্ট করুন (একবার)। "—" মানে খরচের তথ্য নেই।</div></div>
   <div class="card"><h2 class="t" style="font-size:16px">🕵️ সন্দেহজনক ইউজার</h2><div id="suB" class="empty" style="padding:14px">লোড হচ্ছে...</div></div>
   <div class="card"><h2 class="t" style="font-size:16px">সর্বশেষ অর্ডার</h2><div class="tw"><table><tr><th>ID</th><th>ইউজার</th><th>সার্ভিস</th><th>পরিমাণ</th><th>চার্জ</th><th>স্ট্যাটাস</th></tr>${[...S.orders].sort((a,b)=>ts(b)-ts(a)).slice(0,8).map(o=>`<tr><td>${o.orderNo}</td><td>${esc(o.userName)}</td><td>${esc(o.serviceName)}</td><td>${o.quantity}</td><td>${tk(o.charge)}</td><td><span class="st ${o.status}">${o.status}</span></td></tr>`).join('')||'<tr><td colspan=6 class="empty">কোনো অর্ডার নেই</td></tr>'}</table></div></div>`;
-  const cl=async()=>{try{const ds=prompt('কত দিনের পুরোনো ডাটা মুছবেন? (কমপক্ষে ৭, সাধারণত ৩০)','30');if(!ds)return;const d=Math.max(7,parseInt(ds)||30);
+  const cl=async()=>{try{const ds=prompt('কত দিনের পুরোনো ডাটা মুছবেন? (কমপক্ষে ৭)','15');if(!ds)return;const d=Math.max(7,parseInt(ds)||30);
     const r=await srv('/adm/cleanup',{days:d,dry:true});if(r.error)throw new Error(r.error);
     if(!confirm(`${d} দিনের পুরোনো ${r.orders} টি অর্ডার, ${r.deposits} টি ডিপোজিট, ${r.tickets} টি টিকেট, ${r.requests} টি রিকোয়েস্ট ও ${r.xp} টি XP লগ মোছা হবে${r.freeMb?` (প্রায় ${r.freeMb} MB জায়গা খালি হবে)`:''}। ইউজার, ব্যালেন্স ও মোট হিসাব ঠিক থাকবে। মুছবেন?`))return;
-    await srv('/adm/cleanup',{days:d});toast('মুছে ফেলা হয়েছে','ok');S._usT=0;refresh()}catch(e){toast(e.message,'er')}};
+    const rr=await runJob('clean',0,'🧹 মুছছে',{days:d,job:true});toast('✅ মুছে ফেলা হয়েছে: '+((rr.orders||0)+(rr.deposits||0)+(rr.tickets||0)+(rr.requests||0)+(rr.xp||0))+' টি ডাটা','ok');S._usT=0;S.us=null;refresh()}catch(e){toast(e.message,'er')}};
+  if($('#usD'))$('#usD').onclick=async()=>{try{const r=await srv('/adm/usage-detail',{});if(r.error)throw new Error(r.error);mopen(`<h2 class="t">📂 কোথায় কত জায়গা (বড় ${r.rows.length} টি / মোট ${r.total} টি)</h2><div class="tw"><table><tr><th>কালেকশন</th><th>ডকুমেন্ট</th><th>ডাটা MB</th><th>ইন্ডেক্স MB</th></tr>${r.rows.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.docs}</td><td>${x.dataMb??'—'}</td><td>${x.indexMb??'—'}</td></tr>`).join('')}</table></div>`)}catch(e){toast(e.message,'er')}};
   $('#clB').onclick=cl;if($('#clB2'))$('#clB2').onclick=cl;
   dashExtra();
 }
@@ -556,7 +557,7 @@ async function runJob(kind,id,title,extra){
   o.innerHTML='<div style="background:#fff;color:#0f172a;border-radius:16px;padding:20px;width:100%;max-width:380px"><b id="jbT"></b><div style="height:14px;background:#e2e8f0;border-radius:9px;margin:14px 0 6px;overflow:hidden"><div id="jbB" style="height:100%;width:0;background:linear-gradient(90deg,#1e88e5,#22c55e);transition:width .5s"></div></div><div style="display:flex;justify-content:space-between;font-size:13px"><span id="jbX" style="flex:1;padding-right:8px">শুরু হচ্ছে...</span><b id="jbP">0%</b></div><div style="font-size:11px;color:#64748b;margin-top:8px">পেজ বন্ধ করবেন না। কাজ সার্ভারে চলছে।</div></div>';
   document.body.appendChild(o);document.getElementById('jbT').textContent=title;
   try{
-    const s=await srv(kind=='link-audit'?'/adm/link-audit':kind=='fx'?'/adm/prov-fx':kind=='cat'?'/adm/cat-compare':'/adm/job-start',Object.assign({kind,id},extra||{}));if(s.error)throw new Error(s.error);
+    const s=await srv(kind=='clean'?'/adm/cleanup':kind=='link-audit'?'/adm/link-audit':kind=='fx'?'/adm/prov-fx':kind=='cat'?'/adm/cat-compare':'/adm/job-start',Object.assign({kind,id},extra||{}));if(s.error)throw new Error(s.error);
     for(let miss=0;;){
       await new Promise(r=>setTimeout(r,900));
       let j;try{j=await srv('/adm/job',{jid:s.jid})}catch(e){if(++miss>20)throw e;continue}
@@ -704,5 +705,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107p</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107q</div></body>
 </html>
