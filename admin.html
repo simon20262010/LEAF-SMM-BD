@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107m";window.__E=[];window.__X={};
+window.__V="v1107n";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -562,7 +562,7 @@ function rProv(){
   $('#v-prov').innerHTML=`<h2 class="t">প্রোভাইডার API<button class="btn" id="pn"><i class="fa-solid fa-plus"></i> নতুন প্রোভাইডার</button></h2><div class="card"><p style="color:var(--mu);font-size:13px;margin-bottom:12px">অন্য প্যানেলের API যুক্ত করুন। "সার্ভিস ইমপোর্ট" চাপলে সার্ভিস আসবে (রেটের সাথে মার্কআপ যোগ হবে) এবং ওই সার্ভিসের অর্ডার নিজে থেকে প্রোভাইডারে চলে যাবে। প্রোভাইডারের কী/রেট ইউজাররা দেখতে পায় না।</p>
   <div class="tw"><table><tr><th>নাম</th><th>API URL</th><th>কী</th><th>মার্কআপ %</th><th>রেট গুণক</th><th>সার্ভিস</th><th></th></tr>
   ${l.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td><span class="lnk">${esc(p.url)}</span></td><td>${esc((p.key||'').slice(0,4))}••••</td><td>${p.markup||0}%</td><td>${p.fx||1}</td><td>${S.svcs.filter(s=>s.prov==p._id).length}</td>
-  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" style="background:#0ea5e9;color:#fff" data-pm="${p._id}">🔄 মিরর সিংক</button> <button class="btn s" style="background:#7c3aed;color:#fff" data-pl="${p._id}">🔗 লিংক যাচাই</button> <button class="btn s" style="background:#ea580c;color:#fff" data-px="${p._id}">💱 গুণক ঠিক করুন</button> <button class="btn s" style="background:#0d9488;color:#fff" data-pc="${p._id}">📂 ক্যাটাগরি মেলান</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
+  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" style="background:#0ea5e9;color:#fff" data-pm="${p._id}">🔄 মিরর সিংক</button> <button class="btn s" style="background:#7c3aed;color:#fff" data-pl="${p._id}">🔗 লিংক যাচাই</button> <button class="btn s" style="background:#ea580c;color:#fff" data-px="${p._id}">💱 গুণক ঠিক করুন</button> <button class="btn s" style="background:#0d9488;color:#fff" data-pc="${p._id}">📂 ক্যাটাগরি মেলান</button> <button class="btn s" style="background:#4f46e5;color:#fff" data-pk="${p._id}">📋 ক্যাটাগরি ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
   $('#pn').onclick=()=>provForm();
   $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
   $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>dbw('delete','providers',b.dataset.pd)));
@@ -571,6 +571,13 @@ function rProv(){
     const d=await runJob('fx',b.dataset.px,'💱 হিসাব হচ্ছে',{dry:true,fx});const ln=d.sample.map(x=>'• #'+x.sid+' '+x.name+'\n   খরচ ৳'+x.oldCost+' → ৳'+x.newCost+' | বিক্রি ৳'+x.oldRate+' → ৳'+x.newRate).join('\n');
     if(!confirm('💱 গুণক '+d.oldFx+' → '+d.fx+'\n'+d.count+' টি সার্ভিসের খরচ ও দাম বদলাবে।\n\n'+ln+'\n\nপ্রোভাইডারের সাইটের দামের সাথে খরচ মিলছে? মিললে চালান।'))return;
     const r=await runJob('fx',b.dataset.px,'💱 দাম বদলাচ্ছে',{fx});toast('✅ '+r.count+' টি সার্ভিস ঠিক হয়েছে','ok');refresh()}catch(e){toast(e.message,'er')}});
+  $$('[data-pk]').forEach(b=>b.onclick=async()=>{try{const pid=b.dataset.pk;let d=await runJob('cat',pid,'📋 ক্যাটাগরি আনছে',{dry:true,q:''});let all=d.all||[];
+    const draw=()=>{const q=($('#pkq').value||'').trim().toLowerCase();const m=all.filter(x=>!q||x.cat.toLowerCase().includes(q));
+      $('#pkl').innerHTML=m.slice(0,80).map((x,i)=>`<div style="padding:10px;border-bottom:1px solid #e2e8f0"><b>${esc(x.cat)}</b><div style="font-size:12px;color:#64748b;margin:3px 0">প্রোভাইডার ${x.prov} • বটে ${x.bot} • ${x.missing?'<span style="color:#dc2626">নেই '+x.missing+'</span>':'✅ সব আছে'}${x.diffName?' • ✏️ নাম আলাদা '+x.diffName:''}</div>${(x.missing||x.diffName)?`<button class="btn s" data-ci="${all.indexOf(x)}">⬇️ ইমপোর্ট করুন</button>`:''}</div>`).join('')||'<div class="empty">কিছু পাওয়া যায়নি</div>';
+      $$('[data-ci]').forEach(c=>c.onclick=async()=>{const x=all[+c.dataset.ci];if(!confirm('"'+x.cat+'"\nনেই: '+x.missing+' টি যোগ হবে'+(x.diffName?', নাম ঠিক হবে: '+x.diffName:'')+'। চালাবেন?'))return;
+        try{mclose();const r=await runJob('cat',pid,'⬇️ ইমপোর্ট হচ্ছে',{cat:x.cat});toast('✅ যোগ হয়েছে '+r.added+' • নাম ঠিক '+r.fixedCat,'ok');b.click()}catch(e){toast(e.message,'er')}})};
+    mopen(`<h2 class="t">📋 প্রোভাইডারের ক্যাটাগরি (${all.length})</h2><p style="font-size:12px;color:#64748b">প্রোভাইডারের ক্রমে। যেগুলোতে সার্ভিস নেই, ইমপোর্ট বাটন আসবে।</p><input id="pkq" placeholder="🔍 ক্যাটাগরি খুঁজুন"><div id="pkl" style="max-height:60vh;overflow:auto;margin-top:8px"></div>`);
+    $('#pkq').oninput=draw;draw()}catch(e){toast(e.message,'er')}});
   $$('[data-pc]').forEach(b=>b.onclick=async()=>{try{const q=prompt('কোন প্ল্যাটফর্ম/শব্দ দিয়ে ছাঁকবেন? (যেমন telegram)। সব দেখতে খালি রাখুন।','telegram');if(q===null)return;
     const d=await runJob('cat',b.dataset.pc,'📂 তুলনা হচ্ছে',{dry:true,q});const ln=d.badCats.map(x=>'• '+x.cat+'\n   প্রোভাইডার '+x.prov+' | বটে আছে '+x.bot+' | নেই '+x.missing+' | নাম আলাদা '+x.diffName).join('\n');
     const t='📂 '+(d.q?'"'+d.q+'" ':'')+'ক্যাটাগরি: '+d.cats+' টি\nপ্রোভাইডারে (আলাদা): '+d.shown+' | বটে আছে: '+d.botHave+'\n❌ বটে নেই: '+d.missing+'\n✏️ ক্যাটাগরির নাম আলাদা: '+d.diffName+'\n(প্রোভাইডারের হুবহু ডুপ্লিকেট বাদ: '+d.dup+')\n\n'+(ln||'সব ঠিক আছে')+'\n\n';
@@ -685,5 +692,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107m</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107n</div></body>
 </html>
