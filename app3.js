@@ -49,7 +49,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()}
 async function api(path,body){
   const bs=((await botServer())||'').replace(/\/$/,'');if(!bs)return{error:'বট সার্ভারের ঠিকানা পাওয়া যায়নি'};
   const tok=await auth.currentUser.getIdToken();
-  const r=await fetch(bs+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok},body:JSON.stringify(body||{})});
+  const r=await fetch(bs+path,{method:'POST',headers:Object.assign({'Content-Type':'application/json',Authorization:'Bearer '+tok},S.rbAs&&/^\/rb\//.test(path)?{'X-Rb-As':S.rbAs}:{}),body:JSON.stringify(body||{})});
   const j=await r.json().catch(()=>({error:'সার্ভারের উত্তর বোঝা যায়নি'}));if(!r.ok&&!j.error)j.error='ত্রুটি '+r.status;return j;
 }
 const botRate=s=>{const B=S.bot||{},p=(B.prices||{})[s.sid];return p!=null&&!isNaN(+p)?Math.max(+s.rate,+p):+(s.rate*(1+(+B.margin||0)/100)+(+B.flat||0)).toFixed(4)};
@@ -67,10 +67,21 @@ $('#mRb').onclick=()=>openRb();
 async function openRb(){
   go('rbp');const el=$('#rbpBody');el.innerHTML='<div class="empty">লোড হচ্ছে...</div>';
   const j=await api('/rb/me');if(j.error){el.innerHTML=`<div class="empty">${esc(j.error)}</div>`;return}
+  if(j.owner&&(j.all||[]).length&&!j.asBot){S.rbAs='';return rbPick(j)}
   j.bot?rbManage(j.bot):rbCreate(j);
 }
+function rbPick(j){
+  $('#rbpBody').innerHTML=rbBack()+`<div class="pc"><h3 style="margin:0 0 6px">👑 মালিক: রিসেলার বট ম্যানেজ</h3><div style="font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:10px">যেকোনো রিসেলার বট বেছে তার পুরো সেটিং (দাম, পেমেন্ট, নোটিশ, সাপোর্ট, চ্যানেল ইত্যাদি) আপনি নিজেই করতে পারবেন।</div>
+  <input id="rbPq" placeholder="বটের নাম / @username খুঁজুন">
+  <div id="rbPl" style="margin-top:10px"></div>
+  ${j.bot?'<button class="btn" id="rbMine" style="background:#64748b;box-shadow:none">আমার নিজের বট</button>':''}</div>`;
+  const L=j.all;const draw=()=>{const q=($('#rbPq').value||'').toLowerCase();$('#rbPl').innerHTML=L.filter(b=>!q||(b.username+' '+b.name).toLowerCase().includes(q)).map(b=>`<div class="pc" data-ab="${esc(b.id)}" style="margin:8px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><div><b>@${esc(b.username)}</b><br><small>${esc(b.name||'')}</small></div><span>${b.active?'✅':'⛔'} ›</span></div>`).join('')||'<div class="empty">কিছু পাওয়া যায়নি</div>';
+    $$('#rbPl [data-ab]').forEach(e=>e.onclick=async()=>{S.rbAs=e.dataset.ab;const r=await api('/rb/me');if(r.error){S.rbAs='';return toast(r.error,'er')}r.bot?rbManage(r.bot):toast('বট পাওয়া যায়নি','er')})};
+  $('#rbBk').onclick=rbBkGo;$('#rbPq').oninput=draw;draw();
+  const m=$('#rbMine');if(m)m.onclick=()=>{S.rbAs='';api('/rb/me').then(r=>r.bot?rbManage(r.bot):rbCreate(r))};
+}
 const rbBack=()=>RP?`<button class="btn" id="rbBk" style="background:#64748b;box-shadow:none;margin:0 0 14px">✖ অ্যাডমিন প্যানেল বন্ধ করুন</button>`:`<button class="btn" id="rbBk" style="background:#64748b;box-shadow:none;margin:0 0 14px">⬅️ Account এ ফিরুন</button>`;
-const rbBkGo=()=>{if(RP){try{TG.close();return}catch{}}go('set')};
+const rbBkGo=()=>{S.rbAs='';if(RP){try{TG.close();return}catch{}}go('set')};
 function rbCreate(j){
   $('#rbpBody').innerHTML=rbBack()+`<div class="pc"><h3 style="margin:0 0 8px">🤖 রিসেলার বট তৈরি করুন</h3><div style="font-size:14px;line-height:1.7">নিজের নামে আলাদা টেলিগ্রাম বট চালু করুন। দেখতে এই বটের মতই হবে, আলাদা অ্যাকাউন্ট ও ব্যালেন্স থাকবে, আর আপনি নিজের দাম, লাভ, পেমেন্ট নাম্বার, চ্যানেল সব এডিট করতে পারবেন।<br>💲 চার্জ: <b>${tk(j.charge)}</b> (একবারই) • 💰 আপনার ব্যালেন্স: <b>${tk(j.balance)}</b></div></div>
   <label class="l">বট টোকেন (@BotFather থেকে নতুন বট বানিয়ে)</label><input id="rbT" placeholder="123456789:AAxxxxxxxx" autocomplete="off">
@@ -82,8 +93,9 @@ function rbCreate(j){
     if(r.error)return toast(r.error,'er');toast('🎉 @'+r.username+' চালু হয়েছে','ok');loadBot();openRb()};
 }
 async function rbManage(b){
+  const sw=S.rbAs?`<button class="btn" id="rbSw" style="background:#7c3aed;box-shadow:none;margin:0 0 14px">👑 অন্য রিসেলার বট বেছে নিন</button>`:'';
   const m=(b.methods||[]).map(x=>[x.name,x.number,x.note||''].join('|')).join('\n');
-  $('#rbpBody').innerHTML=rbBack()+`<div class="pc"><h3 style="margin:0">🛠 @${esc(b.username)} ${b.active?'✅':'⛔'}</h3>
+  $('#rbpBody').innerHTML=rbBack()+sw+`<div class="pc"><h3 style="margin:0">🛠 @${esc(b.username)} ${b.active?'✅':'⛔'}</h3>
   <div class="grid" style="margin-top:12px"><div class="pc" style="margin:0"><small>ইউজার</small><h3>${b.users}</h3></div><div class="pc" style="margin:0"><small>অর্ডার</small><h3>${b.orders}</h3></div><div class="pc" style="margin:0"><small>বিক্রি</small><h3>${tk(b.sales)}</h3></div><div class="pc" style="margin:0"><small>লাভ</small><h3>${tk(b.profit)}</h3></div></div>
   ${(+S.set.resellerMonthlyFee>0)?`<div class="notice" style="margin:12px 0 0">💳 মাসিক ফি <b>৳${S.set.resellerMonthlyFee}</b> — মূল ব্যালেন্স থেকে কাটা হয়${b.paidUntil?`। পরের তারিখ: <b>${new Date(b.paidUntil*1000).toLocaleDateString('bn-BD',{day:'numeric',month:'long'})}</b>`:''}। ব্যালেন্স না থাকলে বট বন্ধ হয়ে যায়।</div>`:''}
   <button class="btn" id="rbTg" style="background:${b.active?'#dc2626':'#16a34a'};box-shadow:none">${b.active?'বট বন্ধ করুন':'বট চালু করুন'}</button></div>
@@ -123,6 +135,7 @@ async function rbManage(b){
   <div class="sec"><i class="fa-solid fa-paper-plane"></i>ব্রডকাস্ট</div>
   <div class="pc"><textarea id="rbBc" rows="3" class="rbi" placeholder="আপনার বটের সব ইউজারকে মেসেজ"></textarea><button class="btn" id="rbBs">পাঠান</button></div>`;
   $('#rbBk').onclick=rbBkGo;
+  const sw_=$('#rbSw');if(sw_)sw_.onclick=()=>{S.rbAs='';openRb()};
   const upd=async(body,ok)=>{const r=await api('/rb/update',body);if(r.error)return toast(r.error,'er');toast(ok||'সেভ হয়েছে','ok');loadBot();return true};
   $('#rbTg').onclick=async()=>{if(await upd({active:!b.active}))openRb()};
   $('#rbPs').onclick=()=>upd({methods:$('#rbMt').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(a=>a[0]&&a[1]).map(a=>({name:a[0],number:a[1],note:a[2]||''})),supportLink:$('#rbSl').value.trim(),notice:$('#rbNt').value.trim()});
