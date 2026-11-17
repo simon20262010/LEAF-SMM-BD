@@ -253,11 +253,18 @@ document.addEventListener('visibilitychange',async()=>{if(document.hidden||!_bkW
   .cai{display:flex;align-items:center;gap:12px;border:1.5px solid var(--bd);background:#eaf3ff;border-radius:16px;padding:10px 12px;cursor:pointer}
   .cai .nm{flex:1;font-weight:600;font-size:14px;line-height:1.4;color:var(--tx);word-break:break-word}
   .cai.on{background:linear-gradient(135deg,#2196f3,#1565c0);border-color:#1565c0;box-shadow:0 8px 20px #1e88e555}.cai.on .nm{color:#fff}
+  .cci{position:relative;overflow:hidden;animation:cglt 3.8s infinite}
+  .cci::after{content:"";position:absolute;top:-30%;bottom:-30%;width:60%;left:-80%;background:linear-gradient(110deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:cshn 3.8s infinite}
+  .cai:nth-child(3n+1) .cci,.cai:nth-child(3n+1) .cci::after{animation-delay:-1.3s}.cai:nth-child(3n+2) .cci,.cai:nth-child(3n+2) .cci::after{animation-delay:-2.6s}
+  @keyframes cglt{0%,84%,100%{transform:none;filter:none}86%{transform:translate(-2px,1px) skewX(10deg);filter:drop-shadow(2px 0 #0ff) drop-shadow(-2px 0 #f0f)}89%{transform:translate(2px,-1px) skewX(-10deg);filter:drop-shadow(-2px 0 #0ff) drop-shadow(2px 0 #f0f)}92%{transform:translate(-1px,0);filter:brightness(1.5)}95%{transform:none;filter:none}}
+  @keyframes cshn{0%,55%{left:-80%}80%,100%{left:140%}}
+  @media (prefers-reduced-motion:reduce){.cci,.cci::after{animation:none}}
   .cai .ck{color:#fff;font-size:15px}`;document.head.appendChild(st);
   const box=document.createElement('div');box.id='catBox';
   box.innerHTML='<div class="sh" id="catH"><span class="cci" id="catHi"></span><span class="nm" id="catHn">ক্যাটাগরি বেছে নিন</span><i class="fa-solid fa-chevron-down"></i></div><div id="catL"></div>';
   sel.parentNode.insertBefore(box,sel);sel.style.display='none';
-  const ico=cat=>{const s=(S.svcs||[]).find(x=>x.category==cat),p=(typeof PLATS!='undefined'&&PLATS.find(x=>x[0]==(s&&s.platform)))||['','fa-solid fa-layer-group','#1e88e5'];return `<span class="cci" style="background:${p[2]}"><i class="${p[1]}"></i></span>`};
+  const cpm={};(S.svcs||[]).forEach(x=>{const m=cpm[x.category]||(cpm[x.category]={});m[x.platform]=(m[x.platform]||0)+1});
+  const ico=cat=>{const m=cpm[cat]||{},pl=Object.keys(m).sort((x,y)=>m[y]-m[x])[0],p=(typeof PLATS!='undefined'&&PLATS.find(x=>x[0]==pl))||['','fa-solid fa-layer-group','#1e88e5'];return `<span class="cci" style="background:${p[2]}"><i class="${p[1]}"></i></span>`};
   const paint=()=>{const L=$('#catL'),cur=sel.value,opts=[...sel.options].filter(o=>o.value||o.text);
     L.innerHTML=opts.map(o=>`<div class="cai${o.text==cur||o.value==cur?' on':''}" data-c="${esc(o.value||o.text)}">${ico(o.value||o.text)}<span class="nm">${esc(o.text)}</span>${o.text==cur||o.value==cur?'<i class="fa-solid fa-check ck"></i>':''}</div>`).join('')||'<div class="empty">কোনো ক্যাটাগরি নেই</div>';
     const h=$('#catHi');h.outerHTML=ico(cur).replace('class="cci"','class="cci" id="catHi"');$('#catHn').textContent=cur||'ক্যাটাগরি বেছে নিন';
