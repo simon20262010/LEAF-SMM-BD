@@ -42,7 +42,8 @@ function rSet(){
 }
 $('#mOut').onclick=()=>{const go=()=>signOut(auth);TG&&TG.showConfirm?TG.showConfirm('লগআউট করবেন?',ok=>{if(ok)go()}):(confirm('লগআউট করবেন?')&&go())};
 $('#mPass').onclick=async()=>{try{await sendPasswordResetEmail(auth,S.me.email);toast('রিসেট লিংক ইমেইলে পাঠানো হয়েছে','ok')}catch(e){toast(errMsg(e),'er')}};
-$('#mSup').onclick=()=>S.set.supportLink?openL(S.set.supportLink):toast('সাপোর্ট লিংক সেট করা নেই','er');
+const nlk=x=>{x=String(x||'').trim();if(!x)return '';if(/^https?:\/\//i.test(x))return x;if(/^(t\.me|telegram\.me)\//i.test(x))return 'https://'+x;return 'https://t.me/'+x.replace(/^@/,'')};
+$('#mSup').onclick=()=>S.set.supportLink?openL(nlk(S.set.supportLink)):toast('সাপোর্ট লিংক সেট করা নেই','er');
 $('#mTicket').onclick=()=>$('#tModal').classList.remove('hide');$('#tClose').onclick=()=>$('#tModal').classList.add('hide');
 $('#tSend').onclick=async()=>{const s=$('#tSub').value.trim(),m=$('#tMsg').value.trim();if(!S.me)return toast('প্রোফাইল লোড হচ্ছে','er');if(!s||!m)return toast('বিষয় ও মেসেজ লিখুন','er');
   try{const jt=await api('/u/ticket',{subject:s,message:m});if(jt.error)throw new Error(jt.error);syncNow(true);$('#tSub').value=$('#tMsg').value='';toast('টিকেট জমা হয়েছে','ok')}catch(e){toast(errMsg(e),'er')}};

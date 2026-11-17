@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107q";window.__E=[];window.__X={};
+window.__V="v1107r";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -696,7 +696,7 @@ function rSet(){
   $('#pmL').onclick=e=>{const b=e.target.closest('[data-rm]');if(b)b.parentElement.remove()};
   $('#ss').onclick=async()=>{
     const methods=$$('#pmL .pmr').map(r=>({name:r.children[0].value.trim(),number:r.children[1].value.trim(),note:r.children[2].value.trim()})).filter(x=>x.name&&x.number);
-    try{await dbw('set','settings','main',{adminIds:$('#b1').value.split(/[\s,]+/).filter(x=>/^\d+$/.test(x)),forceChannels:$('#b2').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b3').value.trim(),orderBtnLink:$('#b4').value.trim(),resellerBotCharge:+$('#b5').value||0,siteName:$('#s1').value.trim(),supportLink:$('#s2').value.trim(),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,xpFeePct:Math.min(90,Math.max(0,+$('#x6').value||0)),minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},true);S._setDirty=false;toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
+    try{await dbw('set','settings','main',{adminIds:$('#b1').value.split(/[\s,]+/).filter(x=>/^\d+$/.test(x)),forceChannels:$('#b2').value.split('\n').map(x=>x.trim()).filter(Boolean),orderChannel:$('#b3').value.trim(),orderBtnLink:$('#b4').value.trim(),resellerBotCharge:+$('#b5').value||0,siteName:$('#s1').value.trim(),supportLink:(v=>!v||/^https?:\/\//i.test(v)?v:/^(t\.me|telegram\.me)\//i.test(v)?'https://'+v:'https://t.me/'+v.replace(/^@/,''))($('#s2').value.trim()),minDeposit:+$('#s3').value||10,refPercent:+$('#s4').value||0,xpPerOrder:+$('#x1').value||0,xpPerTaka:+$('#x2').value||0,xpPerBdt:+$('#x3').value||0,xpFeePct:Math.min(90,Math.max(0,+$('#x6').value||0)),minXpConvert:+$('#x4').value||0,tutorialLink:$('#x5').value.trim(),levels:$('#s7').value.split('\n').map(x=>x.split(',').map(y=>y.trim())).filter(a=>a[0]&&!isNaN(+a[1])).map(a=>({name:a[0],min:+a[1],disc:+a[2]||0})).sort((a,b)=>a.min-b.min),notice:$('#s5').value.trim(),banners:$('#s6').value.split('\n').map(x=>x.trim()).filter(Boolean),methods},true);S._setDirty=false;toast('সেটিংস সেভ হয়েছে','ok')}catch(e){toast(e.message,'er')}};
 }
 const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><input placeholder="নাম (bKash)" value="${esc(x.name||'')}"><input placeholder="নাম্বার" value="${esc(x.number||'')}"><input placeholder="নোট (Send Money)" value="${esc(x.note||'')}"><button class="btn r s" data-rm style="margin-top:5px"><i class="fa-solid fa-xmark"></i></button></div>`;
 </script>
@@ -705,5 +705,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107q</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107r</div></body>
 </html>
