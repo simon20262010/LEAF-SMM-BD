@@ -111,8 +111,8 @@ function renderAll(){
   if(S.me?.banned){document.body.innerHTML='<div class="empty" style="padding-top:30vh"><i class="fa-solid fa-ban"></i>আপনার অ্যাকাউন্টটি ব্লক করা হয়েছে।<br>সাপোর্টে যোগাযোগ করুন।</div>';return}
   rNotice();rSale();rBanner();rPlat();rFunds();rSet();rRef();rPms();
 }
-function rNotice(){const n=S.set.notice;$('#noticeBox').innerHTML=n?`<div class="notice"><i class="fa-solid fa-bullhorn"></i><div>${esc(n)}</div></div>`:'';$('#bdot').classList.toggle('hide',!n)}
-$('#bell').onclick=()=>toast(S.set.notice||'কোনো নতুন নোটিশ নেই');
+function rNotice(){const n=S.set.notice;let h='';try{h=localStorage.getItem('ntx')||''}catch(e){}const hide=!n||h===n;$('#noticeBox').innerHTML=hide?'':`<div class="notice"><i class="fa-solid fa-bullhorn"></i><div style="flex:1">${esc(n)}</div><button id="ntX" aria-label="বন্ধ করুন" style="background:none;border:0;color:#8a5a00;font-size:18px;padding:0 4px;align-self:flex-start;cursor:pointer"><i class="fa-solid fa-xmark"></i></button></div>`;const x=$('#ntX');if(x)x.onclick=()=>{try{localStorage.setItem('ntx',n)}catch(e){}rNotice()};$('#bdot').classList.toggle('hide',hide)}
+$('#bell').onclick=()=>{try{localStorage.removeItem('ntx')}catch(e){}rNotice();toast(S.set.notice||'কোনো নতুন নোটিশ নেই')};
 
 /* banner */
 let bi=0,bt;
