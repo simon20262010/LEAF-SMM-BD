@@ -107,7 +107,7 @@ function go(v){$$('section').forEach(s=>s.classList.add('hide'));$('#v-'+v).clas
 $$('.nav a').forEach(a=>a.onclick=()=>go(a.dataset.v));
 
 function renderAll(){
-  const sn=S.set.siteName||'SMM Panel';document.title=sn;$$('.sn').forEach(e=>e.textContent=sn);
+  const sn=S.set.siteName||'SMM Panel';document.title=sn;$$('.sn').forEach(e=>{e.classList.remove('run');e.innerHTML='<span class="mq"></span>';const m=e.firstChild;m.textContent=sn;e.title=sn;requestAnimationFrame(()=>{if(m.offsetWidth>e.clientWidth){e.style.setProperty('--mqd',Math.max(8,Math.round(sn.length*0.45))+'s');e.classList.add('run')}})});
   if(S.me?.banned){document.body.innerHTML='<div class="empty" style="padding-top:30vh"><i class="fa-solid fa-ban"></i>আপনার অ্যাকাউন্টটি ব্লক করা হয়েছে।<br>সাপোর্টে যোগাযোগ করুন।</div>';return}
   rNotice();rSale();rBanner();rPlat();rFunds();rSet();rRef();rPms();
 }

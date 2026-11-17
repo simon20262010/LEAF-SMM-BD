@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1108i";window.__E=[];
+window.__V="v1108j";window.__E=[];
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -41,6 +41,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 4
 /* header */
 .top{background:linear-gradient(135deg,#2196f3,#1565c0);color:#fff;padding:20px 18px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 26px 26px;position:sticky;top:0;z-index:20;box-shadow:0 8px 24px rgba(21,101,192,.25)}
 .top h2{font:700 18px Poppins;letter-spacing:.5px;text-transform:uppercase}
+.top h2.sn{flex:1;min-width:0;overflow:hidden;white-space:nowrap;margin-right:10px}.top h2.sn .mq{display:inline-block}.top h2.sn.run .mq{padding-left:100%;animation:mqs var(--mqd,12s) linear infinite}@keyframes mqs{to{transform:translateX(-100%)}}@media (prefers-reduced-motion:reduce){.top h2.sn.run .mq{animation:none;padding-left:0}.top h2.sn{text-overflow:ellipsis}}
 .top .ic{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
 .dot{position:absolute;top:8px;right:9px;width:9px;height:9px;background:#ff4d4f;border-radius:50%;border:2px solid #1e88e5}
 .pad{padding:16px}
@@ -464,5 +465,5 @@ html[data-th] .top,html[data-th] .banner,html[data-th] .bal,html[data-th] .btn:n
   }catch(e){fail("অ্যাপ চালু হয়নি: "+String(e&&e.message||e).slice(0,120))}
 })();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1108i</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1108j</div></body>
 </html>
