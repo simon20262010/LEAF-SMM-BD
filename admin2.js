@@ -111,4 +111,11 @@ window.__X.rbr=function(){
       b.className='';b.innerHTML=(j.items||[]).map(x=>`<div class="lr" style="align-items:center"><div><b>${['🥇','🥈','🥉'][x.rank-1]||'#'+x.rank} ${esc(x.username?'@'+x.username:x.name||x.botId)}</b><br><small>${x.orders} অর্ডার • বিক্রি ${tk(x.sales)} • লাভ ${tk(x.profit)}${x.awarded?' • 🎁 পুরস্কার দেওয়া '+tk(x.awarded):''}</small></div><button class="btn s" data-b="${esc(x.botId)}">🎁 পুরস্কার</button></div>`).join('')||'<div class="empty">এই মাসে কোনো অর্ডার নেই</div>';
       b.querySelectorAll('[data-b]').forEach(e=>e.onclick=async()=>{const a=prompt('কত টাকা পুরস্কার দেবেন?');if(!a)return;const note=prompt('নোট (ঐচ্ছিক, রিসেলার দেখবে)')||'';const r=await srv('/adm/rb-award',{botId:e.dataset.b,amount:a,note});r.error?toast(r.error,'er'):(toast('✅ পুরস্কার দেওয়া হয়েছে','ok'),ld())})};
     $('#rkYm').value=new Date().toISOString().slice(0,7);$('#rkGo').onclick=ld;ld()}};
+
+/* ---------- 👥 রেফার লিডারবোর্ড ---------- */
+window.__X.rfl=function(){
+  const {esc,tk,srv}=A(),el=$('#v-rfl');if(!el._on){el._on=true;el.innerHTML='<h2 class="t">👥 রেফার লিডারবোর্ড</h2><div class="card"><button class="btn s gr" id="rfG">🔄 রিফ্রেশ</button><div id="rfL" style="margin-top:10px">লোড হচ্ছে...</div></div>';
+    const ld=async()=>{const b=$('#rfL');b.textContent='লোড হচ্ছে...';const j=await srv('/adm/ref-board',{}).catch(()=>({error:1}));if(j.error){b.textContent='লোড হয়নি';return}
+      b.innerHTML=`<div style="margin-bottom:8px;color:var(--mu)">মোট রেফার করা ইউজার: <b>${j.total}</b></div>`+((j.items||[]).map((x,i)=>`<div class="lr" style="align-items:center"><div><b>${['🥇','🥈','🥉'][i]||'#'+(i+1)} ${esc(x.name||'—')}</b> <small>${esc(x.id)}</small><br><small>👥 ${x.count} জন রেফার • 💳 ${x.paying} জন ডিপোজিট করেছে</small></div><b style="color:#16a34a">${tk(x.earned)}</b></div>`).join('')||'<div class="empty">এখনো কেউ রেফার করেনি</div>')};
+    $('#rfG').onclick=ld;ld()}};
 //==END==

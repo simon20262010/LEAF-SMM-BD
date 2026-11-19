@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107s";window.__E=[];window.__X={};
+window.__V="v1107t";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -117,6 +117,7 @@ label.ck input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}label.ck smal
     <a data-v="prov"><i class="fa-solid fa-plug"></i>প্রোভাইডার API</a>
     <a data-v="rb"><i class="fa-solid fa-robot"></i>রিসেলার বট</a>
     <a data-v="rbr"><i class="fa-solid fa-trophy"></i>রিসেলার র‍্যাংক</a>
+    <a data-v="rfl"><i class="fa-solid fa-user-plus"></i>রেফার লিডারবোর্ড</a>
     <div class="gl">সাপোর্ট</div>
     <a data-v="reqs"><i class="fa-solid fa-life-ring"></i>রিকোয়েস্ট<b id="cR" class="hide"></b></a>
     <a data-v="tix"><i class="fa-solid fa-ticket"></i>টিকেট<b id="cT" class="hide"></b></a>
@@ -142,6 +143,7 @@ label.ck input{width:20px;height:20px;margin:2px 0 0;flex:0 0 auto}label.ck smal
     <section id="v-set" class="hide"></section>
     <section id="v-feat" class="hide"></section>
     <section id="v-rbr" class="hide"></section>
+    <section id="v-rfl" class="hide"></section>
     <section id="v-ops" class="hide"></section>
   </main>
 </div>
@@ -625,15 +627,15 @@ function provForm(p){
 /* RESELLER BOTS */
 async function rRb(){
   if(S.rbStale){S.rbStale=false;$('#v-rb').innerHTML='<div class="empty">লোড হচ্ছে... (সার্ভার ঘুমিয়ে থাকলে ১ মিনিট লাগতে পারে)</div>';
-    try{const r=await srv('/admin/rbots');if(r.error)throw new Error(r.error);S.rb=r.bots||[]}catch(e){toast(e.message,'er');S.rb=[]}}
+    try{const r=await srv('/admin/rbots');if(r.error)throw new Error(r.error);S.rb=r.bots||[];S.rbProfit=r.totalProfit||0}catch(e){toast(e.message,'er');S.rb=[]}}
   drawRb();
 }
 function drawRb(){
   const l=S.rb;
-  $('#v-rb').innerHTML=`<h2 class="t">রিসেলার বট (${l.length})<span><button class="btn s gr" id="rbR"><i class="fa-solid fa-rotate"></i> রিফ্রেশ</button> <button class="btn s" id="rbB"><i class="fa-solid fa-bullhorn"></i> সব রিসেলার বটে ব্রডকাস্ট</button></span></h2>
+  $('#v-rb').innerHTML=`<h2 class="t">রিসেলার বট (${l.length}) • মোট লাভ: <b style="color:#16a34a">${tk(l.reduce((s,b)=>s+(b.profit||0),0))}</b><span><button class="btn s gr" id="rbR"><i class="fa-solid fa-rotate"></i> রিফ্রেশ</button> <button class="btn s" id="rbB"><i class="fa-solid fa-bullhorn"></i> সব রিসেলার বটে ব্রডকাস্ট</button></span></h2>
   <div class="card"><div class="bar"><input id="rbC" type="number" step="0.01" value="${S.set.resellerBotCharge||0}" placeholder="রিসেলার বট তৈরির চার্জ (৳)"><button class="btn" id="rbCs">চার্জ সেভ</button></div>
-  <div class="tw"><table><tr><th>বট</th><th>মালিক TG</th><th>অ্যাডমিন TG</th><th>অর্ডার চ্যানেল</th><th>ফোর্স</th><th>ইউজার</th><th>অর্ডার</th><th>বিক্রি</th><th>স্ট্যাটাস</th><th></th></tr>
-  ${l.map(b=>`<tr><td><b>@${esc(b.username)}</b></td><td>${esc(b.ownerTid)}</td><td>${esc(b.adminId)}</td><td>${esc(b.orderChannel||'—')}</td><td>${(b.forceChannels||[]).length}</td><td>${b.users||0}</td><td>${b.orders||0}</td><td>${tk(b.sales)}</td><td>${b.active?'<span class="st approved">চালু</span>':'<span class="st rejected">বন্ধ</span>'}</td>
+  <div class="tw"><table><tr><th>বট</th><th>মালিক TG</th><th>অ্যাডমিন TG</th><th>অর্ডার চ্যানেল</th><th>ফোর্স</th><th>ইউজার</th><th>অর্ডার</th><th>বিক্রি</th><th>মোট লাভ</th><th>স্ট্যাটাস</th><th></th></tr>
+  ${l.map(b=>`<tr><td><b>@${esc(b.username)}</b></td><td>${esc(b.ownerTid)}</td><td>${esc(b.adminId)}</td><td>${esc(b.orderChannel||'—')}</td><td>${(b.forceChannels||[]).length}</td><td>${b.users||0}</td><td>${b.orders||0}</td><td>${tk(b.sales)}</td><td><b style="color:${(b.profit||0)>=0?'#16a34a':'#dc2626'}">${tk(b.profit||0)}</b></td><td>${b.active?'<span class="st approved">চালু</span>':'<span class="st rejected">বন্ধ</span>'}</td>
   <td style="white-space:nowrap"><button class="btn s ${b.active?'r':'g'}" data-rt="${b.id}">${b.active?'বন্ধ':'চালু'}</button> <button class="btn s" data-rc="${b.id}">চ্যানেল</button> <button class="btn s" data-rf="${b.id}">ফোর্স</button> <button class="btn s gr" data-rbc="${b.id}">ব্রডকাস্ট</button></td></tr>`).join('')||'<tr><td colspan=10 class="empty">এখনো কোনো রিসেলার বট নেই</td></tr>'}</table></div></div>`;
   const upd=async(id,body)=>{try{const r=await srv('/admin/rbots/update',{id,...body});if(r.error)throw new Error(r.error);toast('সেভ হয়েছে','ok');mclose();S.rbStale=true;rRb()}catch(e){toast(e.message,'er')}};
   const bc=async(id,text)=>{if(!text.trim())return toast('মেসেজ লিখুন','er');try{const r=await srv('/admin/rbots/broadcast',{id,text});if(r.error)throw new Error(r.error);toast('ব্রডকাস্ট শুরু হয়েছে (ব্যাকগ্রাউন্ডে যাচ্ছে)','ok');mclose()}catch(e){toast(e.message,'er')}};
@@ -712,5 +714,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107s</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107t</div></body>
 </html>
