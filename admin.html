@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107u";window.__E=[];window.__X={};
+window.__V="v1107v";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -400,10 +400,13 @@ function rUsr(){
     (async()=>{const h=$('#bh');if(!h)return;try{const j=await srv('/adm/ubal',{q:u._id});if(j.error){h.innerHTML='<div class="empty">'+esc(j.error)+'</div>';return}
       const dt=t=>t?new Date(t*1000).toLocaleString('bn-BD',{timeZone:'Asia/Dhaka',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
       const row=(t,txt,amt)=>`<div class="lr"><div><small>${dt(t)}</small><br>${txt}</div><b style="color:${amt>=0?'#16a34a':'#dc2626'}">${amt>0?'+':''}${tk(amt)}</b></div>`;
-      const ev=[];(j.log||[]).filter(x=>x.unk||/অর্ডার|রেফার|প্রমো/.test((x.why||[]).join(' '))).forEach(x=>ev.push({t:x.t,h:row(x.t,esc((x.why||[]).join(' • ')||'কারণ অজানা')+(x.unk?' ⚠':''),x.d),k:'l'}));
-      (j.ledger||[]).forEach(x=>ev.push({t:x.t,h:row(x.t,'📒 '+esc((x.type||'')+' '+(x.note||'')),x.amount),k:'g'}));
-      (j.deposits||[]).filter(d=>d.status=='approved').forEach(d=>ev.push({t:d.t,h:row(d.t,'💳 ডিপোজিট'+(d.auto?' (অটো)':'')+(d.bonus?' • বোনাস '+d.bonus:''),d.amount),k:'d'}));
-      ev.sort((x,y)=>(y.t||0)-(x.t||0));h.innerHTML=ev.length?ev.slice(0,40).map(x=>x.h).join(''):'<div class="empty">এখনো কোনো রেকর্ড নেই</div>'}catch(e){h.innerHTML='<div class="empty">লোড হয়নি</div>'}})();
+      const where=j.bot&&!j.bot.main?'🤖 রিসেলার বট @'+esc(j.bot.username||j.bot.id):'🏠 আপনার মূল বট';
+      const lt={admin:'👑 অ্যাডমিন (আপনি)',reseller:'🧑‍💼 রিসেলার নিজে (তার বটের কাস্টমারকে)',promo:'🎟 প্রমো',referral:'🤝 রেফার','transfer-out':'📤 ট্রান্সফার পাঠিয়েছে','transfer-in':'📥 ট্রান্সফার পেয়েছে',cashback:'💸 ক্যাশব্যাক',award:'🏆 পুরস্কার (র‍্যাংক)',fee:'💳 মাসিক ফি/চার্জ',bonus:'🎁 বোনাস',challenge:'🎯 চ্যালেঞ্জ',mission:'🎯 মিশন'};
+      const ev=[];(j.log||[]).filter(x=>x.unk).forEach(x=>ev.push({t:x.t,h:row(x.t,'⚠ কারণ অজানা',x.d)}));
+      (j.ledger||[]).forEach(x=>ev.push({t:x.t,h:row(x.t,(lt[x.type]||'📒 '+esc(x.type||''))+'<br><small>'+esc(x.note||'')+'</small>',x.amount)}));
+      (j.deposits||[]).filter(d=>d.status=='approved').forEach(d=>ev.push({t:d.t,h:row(d.t,'💳 ডিপোজিট করেছে — '+where+(d.auto?' • ⚡অটো':' • হাতে অ্যাপ্রুভ')+(d.bonus?' • বোনাস '+d.bonus:''),d.amount)}));
+      (j.orders||[]).forEach(o=>{if(o.status=='canceled'||o.refunded){ev.push({t:o.t,h:row(o.t,'🧾 অর্ডার #'+esc(o.no)+' খরচ',-o.charge)});ev.push({t:o.t+1,h:row(o.t,'↩ অর্ডার #'+esc(o.no)+' ফেরত',o.charge)})}else ev.push({t:o.t,h:row(o.t,'🧾 অর্ডার #'+esc(o.no)+' ('+esc(o.status)+')',-o.charge)})});
+      ev.sort((x,y)=>(y.t||0)-(x.t||0));h.innerHTML=`<div class="lr"><div>এই ইউজার আছে: <b>${where}</b></div></div>`+(ev.length?ev.slice(0,60).map(x=>x.h).join(''):'<div class="empty">এখনো কোনো রেকর্ড নেই</div>')}catch(e){h.innerHTML='<div class="empty">লোড হয়নি</div>'}})();
     $('#bs').onclick=()=>{const a=+$('#ba').value,k=$('#bk').value;if(!(a>0))return toast('সঠিক পরিমাণ দিন','er');confirmDo(`${tk(a)} ${k=='add'?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await act({id:u._id,action:k,amount:a,reason:$('#br').value.trim()});mclose()})};
   });
 }
@@ -714,5 +717,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107u</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107v</div></body>
 </html>
