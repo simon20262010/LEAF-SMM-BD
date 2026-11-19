@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107t";window.__E=[];window.__X={};
+window.__V="v1107u";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -387,7 +387,7 @@ function rUsr(){
   const l=[...S.users].sort((a,b)=>ts(b)-ts(a));
   $('#v-users').innerHTML=`<h2 class="t">ইউজার ম্যানেজমেন্ট (${(S.st&&S.st.users)||S.users.length})</h2><div class="card"><div class="bar"><input id="uq" placeholder="নাম / ইমেইল / টেলিগ্রাম ইউজারনেম / আইডি" value="${esc(S.f.uq)}"></div>
   <div class="tw"><table><tr><th>নাম</th><th>ইমেইল</th><th>ব্যালেন্স</th><th>মোট খরচ</th><th>অর্ডার</th><th>স্ট্যাটাস</th><th></th></tr>
-  ${l.slice(0,200).map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${tk(u.balance)}</td><td>${tk(u.totalSpent)}</td><td>${u.orderCount||0}</td><td>${u.banned?'<span class="st rejected">banned</span>':'<span class="st approved">active</span>'}</td>
+  ${l.slice(0,200).map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td><a data-b="${u._id}" style="cursor:pointer;color:#1e88e5;font-weight:700;text-decoration:underline dotted">${tk(u.balance)}</a></td><td>${tk(u.totalSpent)}</td><td>${u.orderCount||0}</td><td>${u.banned?'<span class="st rejected">banned</span>':'<span class="st approved">active</span>'}</td>
   <td><button class="btn s" data-b="${u._id}">ব্যালেন্স</button> <button class="btn s ${u.banned?'g':'r'}" data-x="${u._id}">${u.banned?'Unban':'Ban'}</button></td></tr>`).join('')}</table></div></div>`;
   const i=$('#uq');i.oninput=e=>{S.f.uq=e.target.value;clearTimeout(S._qt);S._qt=setTimeout(refresh,450)};
   const act=async(body)=>{const r=await srv('/adm/user-act',body);if(r.error)throw new Error(r.error);refresh();return r};
@@ -714,5 +714,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107t</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107u</div></body>
 </html>
