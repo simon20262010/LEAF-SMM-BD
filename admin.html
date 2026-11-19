@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107r";window.__E=[];window.__X={};
+window.__V="v1107s";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -394,7 +394,14 @@ function rUsr(){
     const why=prompt('ব্যান করার কারণ লিখুন (ইউজারকে জানানো হবে):','');if(why===null)return;
     try{await act({id:u._id,action:'ban',reason:why});toast('ব্যান হয়েছে','ok')}catch(e){toast(e.message,'er')}});
   $$('[data-b]').forEach(b=>b.onclick=()=>{const u=S.users.find(x=>x._id==b.dataset.b);
-    mopen(`<h2 class="t">${esc(u.name)} — ব্যালেন্স</h2><p>বর্তমান: <b>${tk(u.balance)}</b></p><label>কাজ</label><select id="bk"><option value="add">➕ যোগ করুন</option><option value="sub">➖ কাটুন</option></select><label>পরিমাণ (৳)</label><input id="ba" type="number" step="0.01" min="0" placeholder="যেমন 50"><label>কারণ (ইউজারকে জানানো হবে ও লগে থাকবে)</label><input id="br" maxlength="150" placeholder="যেমন: বোনাস / ভুল ডিপোজিট সংশোধন"><button class="btn full" id="bs">সেভ</button>`);
+    mopen(`<h2 class="t">${esc(u.name)} — ব্যালেন্স</h2><p>বর্তমান: <b>${tk(u.balance)}</b></p><label>কাজ</label><select id="bk"><option value="add">➕ যোগ করুন</option><option value="sub">➖ কাটুন</option></select><label>পরিমাণ (৳)</label><input id="ba" type="number" step="0.01" min="0" placeholder="যেমন 50"><label>কারণ (ইউজারকে জানানো হবে ও লগে থাকবে)</label><input id="br" maxlength="150" placeholder="যেমন: বোনাস / ভুল ডিপোজিট সংশোধন"><button class="btn full" id="bs">সেভ</button><h3 class="h3" style="margin-top:16px">📜 ব্যালেন্স কীভাবে যোগ/খরচ হয়েছে</h3><div id="bh" style="font-size:13px"><div class="empty">লোড হচ্ছে...</div></div>`);
+    (async()=>{const h=$('#bh');if(!h)return;try{const j=await srv('/adm/ubal',{q:u._id});if(j.error){h.innerHTML='<div class="empty">'+esc(j.error)+'</div>';return}
+      const dt=t=>t?new Date(t*1000).toLocaleString('bn-BD',{timeZone:'Asia/Dhaka',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      const row=(t,txt,amt)=>`<div class="lr"><div><small>${dt(t)}</small><br>${txt}</div><b style="color:${amt>=0?'#16a34a':'#dc2626'}">${amt>0?'+':''}${tk(amt)}</b></div>`;
+      const ev=[];(j.log||[]).filter(x=>x.unk||/অর্ডার|রেফার|প্রমো/.test((x.why||[]).join(' '))).forEach(x=>ev.push({t:x.t,h:row(x.t,esc((x.why||[]).join(' • ')||'কারণ অজানা')+(x.unk?' ⚠':''),x.d),k:'l'}));
+      (j.ledger||[]).forEach(x=>ev.push({t:x.t,h:row(x.t,'📒 '+esc((x.type||'')+' '+(x.note||'')),x.amount),k:'g'}));
+      (j.deposits||[]).filter(d=>d.status=='approved').forEach(d=>ev.push({t:d.t,h:row(d.t,'💳 ডিপোজিট'+(d.auto?' (অটো)':'')+(d.bonus?' • বোনাস '+d.bonus:''),d.amount),k:'d'}));
+      ev.sort((x,y)=>(y.t||0)-(x.t||0));h.innerHTML=ev.length?ev.slice(0,40).map(x=>x.h).join(''):'<div class="empty">এখনো কোনো রেকর্ড নেই</div>'}catch(e){h.innerHTML='<div class="empty">লোড হয়নি</div>'}})();
     $('#bs').onclick=()=>{const a=+$('#ba').value,k=$('#bk').value;if(!(a>0))return toast('সঠিক পরিমাণ দিন','er');confirmDo(`${tk(a)} ${k=='add'?'যোগ':'কাটা'} হবে। নিশ্চিত?`,async()=>{await act({id:u._id,action:k,amount:a,reason:$('#br').value.trim()});mclose()})};
   });
 }
@@ -705,5 +712,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107r</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107s</div></body>
 </html>
