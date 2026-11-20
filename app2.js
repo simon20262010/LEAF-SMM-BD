@@ -67,7 +67,7 @@ function reqForm(type){
   $('#rqS').onclick=async()=>{
     const o=S.orders.find(x=>x._id==$('#rqO').value);if(!o||!S.me)return toast('অর্ডার সিলেক্ট করুন','er');
     if(S.reqs.some(r=>r.orderId==o._id&&r.type==type&&r.status=='pending'))return toast('এই অর্ডারে আগের রিকোয়েস্ট এখনো পেন্ডিং','er');
-    try{const jq=await api('/u/request',{type,orderId:o._id,note:$('#rqN').value.trim()});if(jq.error)throw new Error(jq.error);syncNow(true);toast('রিকোয়েস্ট জমা হয়েছে','ok');$('#rqN').value=''}catch(e){toast(errMsg(e),'er')}};
+    try{const jq=await api('/u/request',{type,orderId:o._id,note:$('#rqN').value.trim()});if(jq.error)throw new Error(jq.error);syncNow(true);toast(jq.msg||'রিকোয়েস্ট জমা হয়েছে','ok');$('#rqN').value=''}catch(e){toast(errMsg(e),'er')}};
 }
 $('#mRf').onclick=()=>reqForm('refund');$('#mRl').onclick=()=>reqForm('refill');
 
