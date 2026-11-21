@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107y";window.__E=[];window.__X={};
+window.__V="v1107z";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -590,10 +590,15 @@ function rProv(){
   $('#v-prov').innerHTML=`<h2 class="t">প্রোভাইডার API<button class="btn" id="pn"><i class="fa-solid fa-plus"></i> নতুন প্রোভাইডার</button></h2><div class="card"><p style="color:var(--mu);font-size:13px;margin-bottom:12px">অন্য প্যানেলের API যুক্ত করুন। "সার্ভিস ইমপোর্ট" চাপলে সার্ভিস আসবে (রেটের সাথে মার্কআপ যোগ হবে) এবং ওই সার্ভিসের অর্ডার নিজে থেকে প্রোভাইডারে চলে যাবে। প্রোভাইডারের কী/রেট ইউজাররা দেখতে পায় না।</p>
   <div class="tw"><table><tr><th>নাম</th><th>API URL</th><th>কী</th><th>মার্কআপ %</th><th>রেট গুণক</th><th>সার্ভিস</th><th></th></tr>
   ${l.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td><span class="lnk">${esc(p.url)}</span></td><td>${esc((p.key||'').slice(0,4))}••••</td><td>${p.markup||0}%</td><td>${p.fx||1}</td><td>${S.svcs.filter(s=>s.prov==p._id).length}</td>
-  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" style="background:#0ea5e9;color:#fff" data-pm="${p._id}">🔄 মিরর সিংক</button> <button class="btn s" style="background:#7c3aed;color:#fff" data-pl="${p._id}">🔗 লিংক যাচাই</button> <button class="btn s" style="background:#ea580c;color:#fff" data-px="${p._id}">💱 গুণক ঠিক করুন</button> <button class="btn s" style="background:#0d9488;color:#fff" data-pc="${p._id}">📂 ক্যাটাগরি মেলান</button> <button class="btn s" style="background:#4f46e5;color:#fff" data-pk="${p._id}">📋 ক্যাটাগরি ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
+  <td style="white-space:nowrap"><button class="btn s gr" data-pb="${p._id}">ব্যালেন্স</button> <button class="btn s g" data-pi="${p._id}">সার্ভিস ইমপোর্ট</button> <button class="btn s" style="background:#16a34a;color:#fff" data-pa="${p._id}">✅ সব সার্ভিস চালু</button> <button class="btn s" style="background:#0ea5e9;color:#fff" data-pm="${p._id}">🔄 মিরর সিংক</button> <button class="btn s" style="background:#7c3aed;color:#fff" data-pl="${p._id}">🔗 লিংক যাচাই</button> <button class="btn s" style="background:#ea580c;color:#fff" data-px="${p._id}">💱 গুণক ঠিক করুন</button> <button class="btn s" style="background:#0d9488;color:#fff" data-pc="${p._id}">📂 ক্যাটাগরি মেলান</button> <button class="btn s" style="background:#4f46e5;color:#fff" data-pk="${p._id}">📋 ক্যাটাগরি ইমপোর্ট</button> <button class="btn s" data-pe="${p._id}">Edit</button> <button class="btn r s" data-pd="${p._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan=7 class="empty">কোনো প্রোভাইডার নেই — "নতুন প্রোভাইডার" চাপুন</td></tr>'}</table></div></div>`;
   $('#pn').onclick=()=>provForm();
   $$('[data-pe]').forEach(b=>b.onclick=()=>provForm(S.prov.find(p=>p._id==b.dataset.pe)));
-  $$('[data-pd]').forEach(b=>b.onclick=()=>confirmDo('প্রোভাইডার ডিলিট করবেন? এর সার্ভিসের অর্ডার আর প্রোভাইডারে যাবে না।',()=>dbw('delete','providers',b.dataset.pd)));
+  $$('[data-pd]').forEach(b=>b.onclick=async()=>{try{const id=b.dataset.pd,d=await srv('/adm/prov-del',{id,dry:true});if(d.error)return toast(d.error,'er');
+    if(!confirm('⚠️ এই প্রোভাইডার এবং তার '+d.services+' টি সার্ভিস মুছে যাবে।'+(d.active?'\n\n❗ এখনো '+d.active+' টি অর্ডার এই প্রোভাইডারে চলছে—মুছলে সেগুলোর স্ট্যাটাস আর আপডেট হবে না।':'')+'\n\nএটা ফেরানো যায় না। চালিয়ে যাবেন?'))return;
+    const r=await srv('/adm/prov-del',{id});r.error?toast(r.error,'er'):(toast('✅ প্রোভাইডার ও '+r.services+' টি সার্ভিস মুছেছে','ok'),refresh())}catch(e){toast(e.message,'er')}});
+  $$('[data-pa]').forEach(b=>b.onclick=async()=>{try{const id=b.dataset.pa,d=await srv('/adm/prov-enable',{id,dry:true});if(d.error)return toast(d.error,'er');if(!d.enable)return toast('বন্ধ থাকা কোনো সার্ভিস নেই ✅','ok');
+    if(!confirm(d.enable+' টি বন্ধ সার্ভিস চালু হবে।'+(d.unsupported?'\n('+d.unsupported+' টি Subscription-ধরনের সার্ভিস চালু হবে না, কারণ সেগুলো এখানে অর্ডার নেয় না)':'')+(d.dup?'\n('+d.dup+' টি ডুপ্লিকেট বন্ধই থাকবে)':'')+'\nচালিয়ে যাবেন?'))return;
+    const r=await srv('/adm/prov-enable',{id});r.error?toast(r.error,'er'):(toast('✅ '+r.enable+' টি সার্ভিস চালু হয়েছে','ok'),refresh())}catch(e){toast(e.message,'er')}});
   $$('[data-pb]').forEach(b=>b.onclick=async()=>{toast('চেক করা হচ্ছে...');try{const r=await srv('/admin/provider/balance',{id:b.dataset.pb});r.error?toast(r.error,'er'):toast('প্রোভাইডার ব্যালেন্স: '+r.balance+' '+(r.currency||''),'ok')}catch(e){toast(e.message,'er')}});
   $$('[data-px]').forEach(b=>b.onclick=async()=>{try{const P=S.prov.find(x=>x._id==b.dataset.px)||{};const v=prompt('প্রোভাইডারের API দাম ডলারে হলে ডলারের রেট দিন (সাইটের সাথে মিলিয়ে, যেমন 130)।\nএখনকার গুণক: '+(P.fx||1),'130');if(v===null)return;const fx=parseFloat(v);if(!(fx>0))return toast('সংখ্যা ঠিক নয়','er');
     const d=await runJob('fx',b.dataset.px,'💱 হিসাব হচ্ছে',{dry:true,fx});const ln=d.sample.map(x=>'• #'+x.sid+' '+x.name+'\n   খরচ ৳'+x.oldCost+' → ৳'+x.newCost+' | বিক্রি ৳'+x.oldRate+' → ৳'+x.newRate).join('\n');
@@ -690,24 +695,9 @@ function rSet(){
   <label>ভিআইপি লেভেল (প্রতি লাইনে: নাম,ন্যূনতম খরচ,ডিসকাউন্ট%)</label><textarea id="s7" rows="5">${(s.levels||[{name:'Starter',min:0,disc:0},{name:'Bronze',min:500,disc:2},{name:'Silver',min:2000,disc:4},{name:'Gold',min:5000,disc:6},{name:'Diamond',min:15000,disc:10}]).map(l=>[l.name,l.min,l.disc].join(',')).join('\n')}</textarea>
   <label>পেমেন্ট মেথড</label><div id="pmL">${m.map((x,i)=>pmRow(x)).join('')}</div>
   <button class="btn gr s" id="pmA" style="margin-top:10px"><i class="fa-solid fa-plus"></i> মেথড যোগ</button><br><button class="btn full" id="ss">সেভ করুন</button></div>
-  <div class="card"><h2 class="t" style="font-size:17px">💲 রেট সেট করার নিয়ম (মূল বট)</h2>
-  <p style="color:var(--mu);font-size:13px;line-height:1.7;margin-bottom:8px">প্রতি লাইনে একটি নিয়ম, রেট প্রতি ১০০০ এর জন্য। যেমন <b>0-3 = 12</b> লিখলে যেসব সার্ভিসের মূল রেট ০ থেকে ৩ টাকার মধ্যে সবগুলোর রেট ১২ টাকা হবে। <b>50+ = 100</b> মানে ৫০ বা তার বেশি হলে ১০০। কোনো নিয়মে না পড়লে রেট আগের মতোই থাকে। একাধিক নিয়ম মিললে ওপরেরটা চলে। লেখা খালি রেখে প্রয়োগ করলে সব রেট মূলে ফিরে যাবে।</p>
-  <textarea id="rr" rows="6" placeholder="0-3 = 12&#10;3.01-10 = 25&#10;50+ = 100">${esc(s.rateRules||'')}</textarea>
-  <div style="display:flex;gap:8px;margin-top:10px"><button class="btn gr s" id="rrD"><i class="fa-regular fa-eye"></i> কতটা বদলাবে দেখুন</button><button class="btn s" id="rrA"><i class="fa-solid fa-check"></i> সেভ ও প্রয়োগ</button></div><div id="rrP"></div></div>
   <div class="card"><h2 class="t" style="font-size:17px">🔑 অ্যাডমিন পাসওয়ার্ড পরিবর্তন</h2><div class="fg"><div><label>বর্তমান পাসওয়ার্ড</label><input id="cp0" type="password"></div><div><label>নতুন পাসওয়ার্ড</label><input id="cp1" type="password"></div><div><label>নতুন পাসওয়ার্ড আবার</label><input id="cp2" type="password"></div></div><button class="btn" id="cpB" style="margin-top:14px">পাসওয়ার্ড বদলান</button></div>`;
   $('#cpB').onclick=async()=>{const a=$('#cp0').value,b=$('#cp1').value;if(b.length<6)return toast('নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর','er');if(b!==$('#cp2').value)return toast('নতুন পাসওয়ার্ড দুইবার মেলেনি','er');
     try{const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,a));await updatePassword(u,b);$('#cp0').value=$('#cp1').value=$('#cp2').value='';toast('পাসওয়ার্ড বদলানো হয়েছে','ok')}catch{toast('বর্তমান পাসওয়ার্ড ভুল','er')}};
-  const rrEl=$('#rr'),DK='leafRrDraft';
-  {const d=lsGet(DK);if(d&&d!==(s.rateRules||''))rrEl.value=d;}
-  rrEl.oninput=()=>lsSet(DK,rrEl.value);
-  const pvH=(r,applied)=>{const L=r.list||[];return `<div style="margin-top:12px;font-weight:700">${applied?'✅ বদলেছে':'👁 দেখুন (এখনো সেভ হয়নি)'}: মোট ${r.total} টি সার্ভিসের মধ্যে <span style="color:var(--pr,#2563eb)">${r.changed} টির</span> রেট বদলাবে${r.changed>L.length?` (প্রথম ${L.length} টি দেখানো হলো)`:''}</div>
-    ${L.length?`<div style="max-height:320px;overflow:auto;margin-top:8px;border:1px solid var(--bd,#e2e8f0);border-radius:10px"><table style="width:100%;font-size:12px"><tr><th>ID</th><th style="text-align:left">সার্ভিস</th><th>মূল</th><th>এখন</th><th>নতুন</th></tr>${L.map(x=>`<tr><td>${x.sid??''}</td><td style="text-align:left">${esc(x.name)}</td><td>${x.base}</td><td>${x.old}</td><td><b style="color:${x.new>x.old?'#16a34a':x.new<x.old?'#dc2626':'inherit'}">${x.new}</b></td></tr>`).join('')}</table></div>`:''}
-    ${applied?'':'<div style="margin-top:8px;font-size:12px;color:var(--mu)">ঠিক থাকলে নিচের <b>সেভ ও প্রয়োগ</b> চাপুন। লেখা মুছবে না, পরে আবার বদলাতে পারবেন।</div>'}`};
-  const rr=async dry=>{const bt=$(dry?'#rrD':'#rrA');bt.disabled=true;try{const r=await srv('/adm/rates',{rules:rrEl.value,dry});if(r.error)throw new Error(r.error);
-    $('#rrP').innerHTML=pvH(r,!dry);
-    if(!dry){s.rateRules=rrEl.value;lsSet(DK,'');toast(`✅ ${r.changed} টি সার্ভিসের রেট বদলেছে`,'ok')}else toast(`${r.changed} টির রেট বদলাবে`,'ok')}catch(e){toast(e.message,'er')}bt.disabled=false};
-  $('#rrD').onclick=()=>rr(true);
-  $('#rrA').onclick=()=>{if(confirm('সব সার্ভিসে এই নিয়ম প্রয়োগ হবে। নিশ্চিত?'))rr(false)};
   $('#pmA').onclick=()=>$('#pmL').insertAdjacentHTML('beforeend',pmRow({}));
   $('#pmL').onclick=e=>{const b=e.target.closest('[data-rm]');if(b)b.parentElement.remove()};
   $('#ss').onclick=async()=>{
@@ -721,5 +711,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107y</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107z</div></body>
 </html>
