@@ -3,7 +3,7 @@
 <head>
 <script>
 /* লোড-গার্ড: অ্যাপ ৮ সেকেন্ডে চালু না হলে কারণ দেখায় */
-window.__V="v1107z";window.__E=[];window.__X={};
+window.__V="v1108a";window.__E=[];window.__X={};
 window.addEventListener('error',function(e){window.__E.push(String(e.message||e.error||'error').slice(0,160))});
 window.addEventListener('unhandledrejection',function(e){window.__E.push(String((e.reason&&e.reason.message)||e.reason).slice(0,160))});
 setTimeout(function(){if(window.__boot)return;var l=document.getElementById('load');if(!l||l.classList.contains('hide'))return;
@@ -507,7 +507,7 @@ function rSvc(){
   <tbody id="svb"></tbody></table></div></div>`;
   $('#sn').onclick=()=>svcForm();
   const pcol=['#0ea5e9','#8b5cf6','#f59e0b','#10b981','#ef4444','#ec4899'],pn=id=>{const i=(S.prov||[]).findIndex(p=>p._id==id);return i<0?{n:'অজানা',c:'#64748b'}:{n:S.prov[i].name||'প্রোভাইডার',c:pcol[i%pcol.length]}};
-  const row=s=>`<tr><td>${s.sid}${s.no&&s.no!=s.sid?`<div style="font-size:11px;color:var(--mu)">ইউজার নং <b>${s.no}</b></div>`:''}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}${s.prov&&s.platform!='code'?`<div style="font-size:12px;margin-top:3px;line-height:1.5;color:${s.provRate!=null&&s.rate<s.provRate?'#dc2626':'var(--mu)'}"><span style="background:${pn(s.prov).c};color:#fff;border-radius:8px;padding:1px 8px;font-weight:700">🔌 ${esc(pn(s.prov).n)}</span> প্রোভাইডার ID: <b>${s.psid??'—'}</b> • খরচ: <b>${s.provRate!=null?tk(s.provRate):'—'}</b> • বিক্রি: <b>${tk(s.rate)}</b>${s.provRate?` • লাভ: <b>${Math.round((s.rate/s.provRate-1)*100)}%</b>`:''}${s.linkOff?' • ⛔ লিংক সমস্যায় বন্ধ':''}${s.dupOff?' • 🧹 ডুপ্লিকেট (সস্তা #'+s.dupOf+' চালু আছে)':''}</div>`:''}</td><td>${s.platform=='code'?tk(s.rate/1000)+' <small>(ফিক্সড)</small>':tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">রুলসের আগে ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+  const row=s=>`<tr><td>${s.sid}${s.no&&s.no!=s.sid?`<div style="font-size:11px;color:var(--mu)">ইউজার নং <b>${s.no}</b></div>`:''}</td><td>${s.platform}</td><td>${esc(s.category)}</td><td>${esc(s.name)}${s.prov?' <small title="প্রোভাইডার থেকে">🔗</small>':''}${s.prov&&s.platform!='code'?`<div style="font-size:12px;margin-top:3px;line-height:1.5;color:${s.provRate!=null&&s.rate<s.provRate?'#dc2626':'var(--mu)'}"><span style="background:${pn(s.prov).c};color:#fff;border-radius:8px;padding:1px 8px;font-weight:700">🔌 ${esc(pn(s.prov).n)}</span> প্রোভাইডার ID: <b>${s.psid??'—'}</b> • খরচ: <b>${s.provRate!=null?tk(s.provRate):'—'}</b> • বিক্রি: <b>${tk(s.rate)}</b>${s.provRate?` • লাভ: <b>${Math.round((s.rate/s.provRate-1)*100)}%</b>`:''}${s.linkOff?' • ⛔ লিংক সমস্যায় বন্ধ':''}</div>`:''}</td><td>${s.platform=='code'?tk(s.rate/1000)+' <small>(ফিক্সড)</small>':tk(s.rate)}${s.baseRate!=null&&Math.abs(s.baseRate-s.rate)>1e-9?`<br><small style="color:var(--mu)">রুলসের আগে ${tk(s.baseRate)}</small>`:''}</td><td>${s.min}-${s.max}</td><td>${s.enabled?'✅':'⛔'}</td><td><button class="btn s" data-e="${s._id}">Edit</button> <button class="btn r s" data-d="${s._id}"><i class="fa-solid fa-trash"></i></button></td></tr>`;
   let lim=100;
   let fOn=false,curM=[];
   const draw=()=>{const q=($('#svq').value||'').trim().toLowerCase();let m=l.filter(s=>!q||String(s.sid)==q||String(s.no||'')==q||String(s.psid||'')==q||(s.name||'').toLowerCase().includes(q)||(s.category||'').toLowerCase().includes(q));
@@ -519,7 +519,7 @@ function rSvc(){
     $('#svb').innerHTML=m.slice(0,lim).map(row).join('')||'<tr><td colspan=8 class="empty">'+(q?'কিছু পাওয়া যায়নি':'কোনো সার্ভিস নেই — "নতুন সার্ভিস" চাপুন')+'</td></tr>'+(m.length>lim?'<tr><td colspan=8 style="text-align:center"><button class="btn" id="svm">আরও দেখান ('+(m.length-lim)+' টি বাকি)</button></td></tr>':'');
     const b=$('#svm');if(b)b.onclick=()=>{lim+=100;draw()};
     $$('[data-e]').forEach(b=>b.onclick=()=>svcForm(S.svcs.find(s=>s._id==b.dataset.e)));$$('[data-d]').forEach(b=>b.onclick=()=>confirmDo('সার্ভিস ডিলিট করবেন?',()=>dbw('delete','services',b.dataset.d)))};
-  $('#sdd').onclick=async()=>{try{const p=await srv('/adm/dedupe',{dry:true});if(p.error)return toast(p.error,'er');if(!p.changes)return toast('কোনো ডুপ্লিকেট নেই ✅','ok');if(!confirm(p.removed+' টি ডুপ্লিকেট সার্ভিস (যেগুলো দাম বেশি) বন্ধ হবে, সস্তাটা চালু থাকবে। করবেন?'))return;const r=await srv('/adm/dedupe',{});toast('✅ '+r.removed+' টি ডুপ্লিকেট সরানো হয়েছে','ok');refresh()}catch(e){toast(e.message,'er')}};
+  $('#sdd').onclick=async()=>{try{const p=await srv('/adm/dedupe',{dry:true});if(p.error)return toast(p.error,'er');if(!p.changes)return toast('কোনো ডুপ্লিকেট নেই ✅','ok');if(!confirm('⚠️ '+p.removed+' টি ডুপ্লিকেট সার্ভিস (যেগুলোর রেট বেশি) সরাসরি মুছে যাবে, সস্তাটা থাকবে। এটা ফেরানো যায় না। করবেন?'))return;const r=await srv('/adm/dedupe',{});toast('✅ '+r.removed+' টি ডুপ্লিকেট মুছে গেছে','ok');refresh()}catch(e){toast(e.message,'er')}};
   $('#svq').value=oq;$('#svB').onclick=async()=>{try{if(!curM.length)return toast('তালিকা খালি','er');
     const md=prompt('এখন তালিকায় '+curM.length+' টি সার্ভিস। কীভাবে বদলাবেন?\n1 = খরচের N গুণ (যেমন 2 = দ্বিগুণ)\n2 = এখনকার রেট N% বাড়ান/কমান (কমাতে - দিন)\n3 = সবার একই রেট বসান','1');if(!md)return;const mode={1:'mult',2:'pct',3:'set'}[md.trim()];if(!mode)return toast('1, 2 বা 3 লিখুন','er');
     const v=prompt(mode=='mult'?'খরচের কত গুণ? (যেমন 2)':mode=='pct'?'কত %? (বাড়াতে 10, কমাতে -10)':'নতুন রেট (প্রতি ১০০০, ৳)','');if(v===null||v==='')return;const val=parseFloat(v);if(isNaN(val))return toast('সংখ্যা ঠিক নয়','er');
@@ -711,5 +711,5 @@ const pmRow=x=>`<div class="pmr" style="display:flex;gap:8px;margin-top:8px"><in
 if(t.trimEnd().slice(-9)!=="//==END==")throw "admin2.js অসম্পূর্ণ — আবার আপলোড করুন";
 await import(URL.createObjectURL(new Blob([t],{type:"text/javascript"})))}catch(e){window.__E.push("admin2.js: "+(e&&e.message||e));setTimeout(function(){var x=document.getElementById("toast");if(x){x.textContent="⚠️ admin2.js লোড হয়নি — নতুন পেজগুলো কাজ করবে না";x.className="toast show er"}},3000)}})();
 </script>
-<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1107z</div></body>
+<div style="position:fixed;left:6px;bottom:2px;font:9px sans-serif;color:#94a3b8;z-index:1;pointer-events:none">v1108a</div></body>
 </html>
