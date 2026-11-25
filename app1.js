@@ -43,6 +43,20 @@ const S={uid:null,me:null,set:{},svcs:[],orders:[],deps:[],tix:[],reqs:[],lb:nul
 let mode='login';
 const TG=window.Telegram?.WebApp||null;
 if(TG){try{TG.ready();TG.expand();TG.setHeaderColor('#1e88e5');TG.setBackgroundColor('#f3f7fc');TG.disableVerticalSwipes&&TG.disableVerticalSwipes()}catch(e){}}
+/* ---------- শুধু টেলিগ্রামে চলবে: ওয়েবসাইট ব্রাউজারে খুললে বটে পাঠিয়ে দেয় ---------- */
+if(!(TG&&TG.initData)){(async()=>{
+  await new Promise(r=>setTimeout(r,300));
+  try{const st=document.createElement('style');st.textContent='#app,#auth,#load{display:none!important}';document.head.appendChild(st);
+  const d=document.createElement('div');d.id='tgOnly';d.style.cssText='position:fixed;inset:0;z-index:2147483647;background:linear-gradient(160deg,#1e88e5,#0d47a1);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:inherit';
+  d.innerHTML='<div style="font-size:54px;margin-bottom:10px">✈️</div><h2 style="margin:0 0 8px;font-size:22px">টেলিগ্রাম বট দিয়ে খুলুন</h2><p style="margin:0 0 20px;opacity:.9;line-height:1.6">এই সাইট শুধু আমাদের টেলিগ্রাম বটের ভেতর থেকে চলে। নিচের বাটনে চাপলে বট খুলবে।</p><a id="tgGo" href="#" style="background:#fff;color:#0d47a1;font-weight:700;padding:13px 26px;border-radius:12px;text-decoration:none">🤖 টেলিগ্রামে খুলুন</a><div id="tgU" style="margin-top:14px;opacity:.85;font-size:14px"></div>';
+  document.body.appendChild(d);
+  const b0=(new URLSearchParams(location.search).get('b')||'').replace(/\D/g,'');
+  let bs='';try{bs=await botServer()}catch(e){}
+  bs=bs||'https://leaf-smm-bd-s.onrender.com';
+  const r=await fetch(bs.replace(/\/$/,'')+'/public/bot?b='+b0),j=await r.json();
+  if(j&&j.username){const u='https://t.me/'+j.username;$('#tgGo').href=u;$('#tgU').textContent='@'+j.username;setTimeout(()=>{location.href=u},1500)}
+  }catch(e){}
+})()}
 const tgUser=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.user)||null,tgStart=(TG&&TG.initDataUnsafe&&TG.initDataUnsafe.start_param)||'';
 const openL=u=>{if(TG&&/^https:\/\/t\.me\//.test(u))TG.openTelegramLink(u);else if(TG)TG.openLink(u);else open(u,'_blank')};
 const refParam=new URLSearchParams(location.search).get('ref')||tgStart;
